@@ -134,3 +134,4 @@ dmypy.json
 # Datasets
 **/data
 *.zip
+ADL_DCASE_DATA/
