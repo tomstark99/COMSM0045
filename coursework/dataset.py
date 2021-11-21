@@ -1,7 +1,13 @@
 from torch.utils.data.dataset import Dataset
 import torch
+<<<<<<< Updated upstream
 import torchaudio
 
+=======
+from torchvision import transforms
+
+import numpy as np
+>>>>>>> Stashed changes
 from pathlib import Path
 import pandas as pd
 
@@ -13,6 +19,7 @@ class DCASE(Dataset):
         self._clip_duration = clip_duration
         self._total_duration = 30 #DCASE audio length is 30s
 
+<<<<<<< Updated upstream
         self._sample_rate = 44100 #DCASE sampling rate is 44100
 
         #creating melspec function
@@ -52,6 +59,20 @@ class DCASE(Dataset):
         spec = self._spec_fn(data_array).log2()
         return spec
 
+=======
+        self._data_len = len(self._labels)
+
+    def __getitem__(self, index):
+        #reading spectrograms
+        filename, label = self._labels.iloc[index]
+        filepath = self._root_dir / 'audio'/ filename
+        spec = torch.from_numpy(np.load(filepath))
+
+        #splitting spec
+        spec = self.__trim__(spec)
+        return spec, label
+
+>>>>>>> Stashed changes
     def __trim__(self, spec: torch.Tensor) -> torch.Tensor:
         """
         Trims spectrogram into multiple clips of length specified in self._num_clips
@@ -65,8 +86,13 @@ class DCASE(Dataset):
         for clip_idx in range(self._num_clips):
             start = clip_idx * time_interval
             end = start + time_interval
+<<<<<<< Updated upstream
             spec_clip = spec[:, :, start:end]
             spec_clip = torch.squeeze(spec_clip)
+=======
+            spec_clip = spec[:, start:end]
+            #spec_clip = torch.squeeze(spec_clip)
+>>>>>>> Stashed changes
             all_clips.append(spec_clip)
 
         specs = torch.stack(all_clips)
