@@ -1,5 +1,3 @@
----------README---------
-
 # Files
 
 ## ADL_DCASE_DATA.zip
