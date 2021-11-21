@@ -1,13 +1,8 @@
 from torch.utils.data.dataset import Dataset
 import torch
-<<<<<<< Updated upstream
-import torchaudio
-
-=======
 from torchvision import transforms
 
 import numpy as np
->>>>>>> Stashed changes
 from pathlib import Path
 import pandas as pd
 
@@ -19,47 +14,6 @@ class DCASE(Dataset):
         self._clip_duration = clip_duration
         self._total_duration = 30 #DCASE audio length is 30s
 
-<<<<<<< Updated upstream
-        self._sample_rate = 44100 #DCASE sampling rate is 44100
-
-        #creating melspec function
-        win_size = int(round(40 * self._sample_rate / 1e3)) #40ms window length
-        self._spec_fn = torchaudio.transforms.MelSpectrogram(
-            sample_rate=self._sample_rate,
-            n_fft=win_size,
-            n_mels=60,
-            hop_length=win_size//2, #50% overlapping windows
-            window_fn=torch.hamming_window,
-            power=2,
-        )
-
-        self._data_len = len(self._labels)
-
-    def __getitem__(self, index):
-        #reading raw audio
-        filename, label = self._labels.iloc[index]
-        filepath = self._root_dir / 'audio'/ filename
-        data_array, sample_rate = torchaudio.load(filepath)
-
-        #make sure using correct sampling rate
-        assert sample_rate == self._sample_rate, "Sample rate doesn't match expected rate. " \
-                                                 "Can not create spectrogram as intended, likely an issue with data."
-        #creating spectrogram and splitting
-        spec = self.__make_spec__(data_array)
-        spec = self.__trim__(spec)
-        return spec, label
-
-
-    def __make_spec__(self, data_array: torch.Tensor) -> torch.Tensor:
-        """
-        Create spectrogram using data input
-        :param data_array: tensor containing raw audio of shape [1, 1323001 (sample_rate * audio length(30s))]
-        :return: tensor containing log mel spectrogram of shape [1, 60, 1501]
-        """
-        spec = self._spec_fn(data_array).log2()
-        return spec
-
-=======
         self._data_len = len(self._labels)
 
     def __getitem__(self, index):
@@ -72,7 +26,6 @@ class DCASE(Dataset):
         spec = self.__trim__(spec)
         return spec, label
 
->>>>>>> Stashed changes
     def __trim__(self, spec: torch.Tensor) -> torch.Tensor:
         """
         Trims spectrogram into multiple clips of length specified in self._num_clips
@@ -86,13 +39,8 @@ class DCASE(Dataset):
         for clip_idx in range(self._num_clips):
             start = clip_idx * time_interval
             end = start + time_interval
-<<<<<<< Updated upstream
-            spec_clip = spec[:, :, start:end]
-            spec_clip = torch.squeeze(spec_clip)
-=======
             spec_clip = spec[:, start:end]
             #spec_clip = torch.squeeze(spec_clip)
->>>>>>> Stashed changes
             all_clips.append(spec_clip)
 
         specs = torch.stack(all_clips)
