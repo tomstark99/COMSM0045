@@ -11,16 +11,22 @@ class CNN(nn.Module):
             length of the clips that the spectogram is split into
         num_clips:
             number of clips the spectogram is split into
+        batch_size:
+            number of spectogram audios to pass through the model
     """
     
     def __init__(
         self, 
         clip_length: int, 
-        num_clips: int
+        num_clips: int,
+        batch_size: int = 64
     ):
         super().__init__()
         self.clip_length = clip_length
         self.num_clips = num_clips
+        self.batch_size = batch_size
+        self.height = 60
+        self.width = 50 * clip_length
 
         self.conv1 = nn.Conv2d(
             in_channels=1,
@@ -39,7 +45,7 @@ class CNN(nn.Module):
             stride=5
         )
         self.pool2 = nn.AdaptiveMaxPool2d((4, None))
-        self.fc1 = nn.Linear(256*4*25*num_clips, 15)
+        self.fc1 = nn.Linear(256*4*25, 15)
         
         self.initialise_layer(self.conv1)
         self.initialise_layer(self.conv2)
@@ -49,25 +55,28 @@ class CNN(nn.Module):
         input: [B, num_clips, H, W]
 
         Pre-processing, change dim from:
-            [B, C, H, W] -> [C, B, H, W]
+            [B, num_clips, H, W] -> [B * num_clips, C, H, W]
         
-        where (C) is the number of segments the clip is split into,
-        to simulate batch of number of clip segments and uniary depth
+        where (C = 1) is the number of 'channels' of uniary depth
         """
-        xs = xs.permute(1,0,2,3)
+        xs = xs.view(self.batch_size * self.num_clips, 1, self.height, self.width)
         xs = self.batch1(self.conv1(xs))
         xs = self.pool1(F.relu(xs))
         xs = self.batch2(self.conv2(xs))
         xs = self.pool2(F.relu(xs))
         """
-        Re-shape and flatten back to batch dim of 1:
-            [num_clips, X, Y, Z] -> [B, num_clips * X * Y * Z]
-            
-        where (B) = 1 so you are not left with predicitions for each clip segment,
-        just one prediction for the whole clip
+        Re-shape and flatten to:
+            [B * num_clips, X, Y, Z] -> [B * num_clips, X * Y * Z]
         """
-        xs = xs.view(1,-1)
+        xs = torch.flatten(xs, 1)
         xs = self.fc1(xs)
+        """
+        Re-shape to:
+            [B * num_clips, preds] -> [B, num_clips, preds]
+
+        where preds is 15 for 15 class predictions
+        """
+        xs = xs.view(self.batch_size, self.num_clips, -1)
         return xs
         
     @staticmethod
