@@ -1,17 +1,13 @@
-import time
-from multiprocessing import cpu_count
-from typing import Union, NamedTuple, Dict, Any
+from typing import Union, Dict, Any
 
 import torch
 import torch.backends.cudnn
 import numpy as np
-from torch import nn, optim
-from torch.nn import functional as F
+from torch import nn
 from torch.optim.optimizer import Optimizer
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
-
 
 class Trainer:
     def __init__(
@@ -106,43 +102,49 @@ class Trainer:
         log_frequency: int = 5,
         start_epoch: int = 0
     ):
-        self.model.train()
         for epoch in tqdm(
             range(start_epoch, epochs),
             unit=" epoch",
             dynamic_ncols=True
         ):
-            # data_load_start_time = time.time()
-                # data_load_end_time = time.time()
-
-
-                # logits = self.model.forward(batch)
 
             train_results = self._train_step()
             loss = train_results['loss']
+            accuracy = train_results['accuracy']
 
-                with torch.no_grad():
-                    preds = logits.argmax(-1)
-                    accuracy = compute_accuracy(labels, preds)
+            if ((self.step + 1) % log_frequency) == 0:
+                self.log_metrics(epoch, accuracy, loss)
+            if ((self.step + 1) % print_frequency) == 0:
+                self.print_metrics(epoch, accuracy, loss)
 
-                # data_load_time = data_load_end_time - data_load_start_time
-                # step_time = time.time() - data_load_end_time
-                if ((self.step + 1) % log_frequency) == 0:
-                    self.log_metrics(epoch, accuracy, loss)
-                if ((self.step + 1) % print_frequency) == 0:
-                    self.print_metrics(epoch, accuracy, loss)
-
-                self.step += 1
-                data_load_start_time = time.time()
+            self.step += 1
 
             self.summary_writer.add_scalar("epoch", epoch, self.step)
             if ((epoch + 1) % val_frequency) == 0:
                 self.validate()
-                # self.validate() will put the model in validation mode,
-                # so we have to switch back to train mode afterwards
-                self.model.train()
+        
+        self.print_per_class_accuracy()
 
-    
+
+    def validate(self):
+
+        validation_results = self._val_step()
+
+        accuracy = validation_results['accuracy']
+        average_loss = np.sum(validation_results['loss']) / len(self.val_loader)
+
+        self.summary_writer.add_scalars(
+                "accuracy",
+                {"test": accuracy},
+                self.step
+        )
+        self.summary_writer.add_scalars(
+                "loss",
+                {"test": average_loss},
+                self.step
+        )
+        print(f"validation loss: {average_loss:.5f}, accuracy: {accuracy * 100:2.2f}")
+
     def compute_accuracy(
         preds: Union[torch.Tensor, np.ndarray],
         labels: Union[torch.Tensor, np.ndarray]
@@ -160,9 +162,6 @@ class Trainer:
                 f"step: [{epoch_step}/{len(self.train_loader)}], "
                 f"batch loss: {loss:.5f}, "
                 f"batch accuracy: {accuracy * 100:2.2f}, "
-                # f"data load time: "
-                # f"{data_load_time:.5f}, "
-                # f"step time: {step_time:.5f}"
         )
 
     def print_per_class_accuracy(self):
@@ -181,6 +180,7 @@ class Trainer:
                   12: 'residential_area',
                   13: 'train',
                   14: 'tram'}
+
         correct_pred = {classname: 0 for classname in classes.keys()}
         total_pred = {classname: 0 for classname in classes.keys()}
 
@@ -212,22 +212,3 @@ class Trainer:
                 {"train": float(loss.item())},
                 self.step
         )
-
-    def validate(self):
-
-        validation_results = self._val_step()
-
-        accuracy = validation_results['accuracy']
-        average_loss = np.sum(validation_results['loss']) / len(self.val_loader)
-
-        self.summary_writer.add_scalars(
-                "accuracy",
-                {"test": accuracy},
-                self.step
-        )
-        self.summary_writer.add_scalars(
-                "loss",
-                {"test": average_loss},
-                self.step
-        )
-        print(f"validation loss: {average_loss:.5f}, accuracy: {accuracy * 100:2.2f}")
