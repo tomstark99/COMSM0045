@@ -60,6 +60,8 @@ class Trainer:
 
             self.optimizer.step()
 
+            print(f'loss: {loss.detach().cpu().item()}')
+
             train_results['loss'].append(loss.detach().cpu().item())
             train_results['accuracy'].append(step_results['accuracy'])
 
@@ -99,8 +101,8 @@ class Trainer:
         self,
         epochs: int,
         val_frequency: int,
-        print_frequency: int = 20,
-        log_frequency: int = 5,
+        print_frequency: int = 1,
+        log_frequency: int = 1,
         start_epoch: int = 0
     ):
         for epoch in tqdm(
@@ -124,7 +126,7 @@ class Trainer:
             if ((epoch + 1) % val_frequency) == 0:
                 self.validate()
         
-        self.print_per_class_accuracy()
+        # self.print_per_class_accuracy()
 
 
     def validate(self):

@@ -2,7 +2,7 @@ import torch
 import os
 from torch.utils.data import DataLoader
 from torch.optim import Adam
-import torch.nn.functional as F
+import torch.nn as nn
 import pandas as pd
 
 from torch.utils.tensorboard import SummaryWriter
@@ -22,7 +22,7 @@ def main():
     root_dir_train = os.getcwd() + '/ADL_DCASE_DATA/development'
     root_dir_val = os.getcwd() + '/ADL_DCASE_DATA/evaluation'
 
-    summary_writer = SummaryWriter(str(os.getcwd()), flush_secs=1)
+    summary_writer = SummaryWriter("xddddd", flush_secs=1)
 
     train_dataset = DCASE(root_dir_train, clip_length)
     val_dataset = DCASE(root_dir_val, clip_length)
@@ -34,10 +34,10 @@ def main():
     optim = Adam(model.parameters(), lr=3e-4)
 
     trainer = Trainer(
-        model, train_loader, val_loader, F.cross_entropy, optim, summary_writer, device
+        model, train_loader, val_loader, nn.CrossEntropyLoss(), optim, summary_writer, device
     )
 
-    trainer.train(2, 2)
+    trainer.train(2, 1)
 
 if __name__ == '__main__':
     main()

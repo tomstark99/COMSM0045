@@ -138,4 +138,5 @@ ADL_DCASE_DATA/
 ADL_DCASE_DATA
 
 # BC4 logs
-events.*
+events*
+slurm*
