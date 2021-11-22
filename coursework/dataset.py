@@ -13,7 +13,7 @@ class DCASE(Dataset):
         self._labels['label'] = self._labels.label.astype('category').cat.codes.astype('int') #create categorical labels
         self._clip_duration = clip_duration
         self._total_duration = 30 #DCASE audio length is 30s
-
+        self._num_clips = self._total_duration // clip_duration 
         self._data_len = len(self._labels)
 
     def __getitem__(self, index):

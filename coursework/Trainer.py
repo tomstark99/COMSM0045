@@ -1,4 +1,4 @@
-from typing import Union, Dict, Any
+from typing import Union, Dict, Any, Tuple
 
 import torch
 import torch.backends.cudnn
@@ -33,6 +33,7 @@ class Trainer:
         data, labels = batch
         
         logits = self.model.forward(data.to(self.device))
+        logits = logits.mean(1)
         preds = logits.detach().cpu().argmax(-1)
 
         step_results = {
@@ -146,6 +147,7 @@ class Trainer:
         print(f"validation loss: {average_loss:.5f}, accuracy: {accuracy * 100:2.2f}")
 
     def compute_accuracy(
+        self,
         preds: Union[torch.Tensor, np.ndarray],
         labels: Union[torch.Tensor, np.ndarray]
     ) -> float:
