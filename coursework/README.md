@@ -1,5 +1,9 @@
 # Files
 
+## download_dataset.sh
+
+This is a shell script file that will download and extract the full dataset required for the coursework. It will extract it in such a way so it will work with the notebooks. Into a folder called "ADL_DCASE_DATA/" in the "coursework/" directory. Can be useful for testing the coursework on BC4 or any machine where a shell terminal is the only access 
+
 ## ADL_DCASE_DATA.zip
 
 This is the zip file of the DCASE 2016 dataset. Unzipped it has the following file format:
