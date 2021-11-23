@@ -86,7 +86,10 @@ def main(args):
     root_dir_train = args.dataset_root / 'development'
     root_dir_val = args.dataset_root / 'evaluation'
 
-    summary_writer = SummaryWriter(args.log_dir, flush_secs=1)
+	log_dir = get_summary_writer_log_dir(args)
+	print(f'writing logs to {log_dir}')
+
+    summary_writer = SummaryWriter(str(log_dir), flush_secs=1)
 
     train_dataset = DCASE(root_dir_train, clip_length)
     val_dataset = DCASE(root_dir_val, clip_length)
