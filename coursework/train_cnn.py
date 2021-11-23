@@ -8,17 +8,17 @@ import pandas as pd
 from torch.utils.tensorboard import SummaryWriter
 
 from dataset import DCASE
-from Trainer import Trainer
+from trainer import Trainer
 from CNN import CNN
 
 def main():
     if torch.cuda.is_available():
-        device = torch.device("cuda")
+        device = torch.device("cpu")
     else:
         device = torch.device("cpu")
 
     clip_length = 3
-    batch_size = 1
+    batch_size = 64
     root_dir_train = os.getcwd() + '/ADL_DCASE_DATA/dev'
     root_dir_val = os.getcwd() + '/ADL_DCASE_DATA/dev'
 
@@ -37,7 +37,7 @@ def main():
         model, train_loader, val_loader, nn.CrossEntropyLoss(), optim, summary_writer, device
     )
 
-    trainer.train(2, 1)
+    trainer.train(5, 1)
 
 if __name__ == '__main__':
     main()

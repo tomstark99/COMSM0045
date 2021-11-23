@@ -42,7 +42,12 @@ class Trainer:
         }
         return step_results
 
-    def _train_step(self) -> Dict[str, Any]:
+    def _train_step(
+        self,
+        epoch: int,
+        print_frequency: int = 100,
+        log_frequency: int = 10
+    ) -> Dict[str, Any]:
         self.model.train()
 
         train_results = {
@@ -50,12 +55,12 @@ class Trainer:
             'accuracy': []
         }
 
-        for batch in tqdm(
-            self.train_loader,
-            unit=" audio seq",
-            dynamic_ncols=True,
-            total=len(self.train_loader)
-        ):
+        for batch in self.train_loader:# tqdm(
+            # self.train_loader,
+            # unit=" audio seq",
+            # dynamic_ncols=True,
+            # total=len(self.train_loader)
+        # ):
             self.optimizer.zero_grad()
             step_results = self._step(batch)
 
@@ -68,6 +73,21 @@ class Trainer:
 
             train_results['loss'].append(loss.detach().cpu().item())
             train_results['accuracy'].append(step_results['accuracy'])
+
+            if ((self.step + 1) % log_frequency) == 0:
+                self.log_metrics(
+                    epoch, 
+                    step_results['accuracy'], 
+                    loss.detach().cpu().item()
+                )
+            if ((self.step + 1) % print_frequency) == 0:
+                self.print_metrics(
+                    epoch, 
+                    step_results['accuracy'], 
+                    loss.detach().cpu().item()
+                )
+
+            self.step += 1
 
         return train_results
 
@@ -105,8 +125,8 @@ class Trainer:
         self,
         epochs: int,
         val_frequency: int,
-        print_frequency: int = 1,
-        log_frequency: int = 1,
+        print_frequency: int = 100,
+        log_frequency: int = 10,
         start_epoch: int = 0
     ):
         for epoch in tqdm(
@@ -115,16 +135,18 @@ class Trainer:
             dynamic_ncols=True
         ):
 
-            train_results = self._train_step()
-            loss = train_results['loss']
-            accuracy = train_results['accuracy']
+            train_results = self._train_step(
+                epoch,
+                print_frequency,
+                log_frequency
+            )
 
-            if ((self.step + 1) % log_frequency) == 0:
-                self.log_metrics(epoch, accuracy, loss)
-            if ((self.step + 1) % print_frequency) == 0:
-                self.print_metrics(epoch, accuracy, loss)
-
-            self.step += 1
+            """
+            list of losses and accuracies from 1 epoch over the whole dataset: 
+                len({loss, accuracy}) = len(dataloader)
+            """
+            # loss = train_results['loss']
+            # accuracy = train_results['accuracy']
 
             self.summary_writer.add_scalar("epoch", epoch, self.step)
             if ((epoch + 1) % val_frequency) == 0:
@@ -217,6 +239,6 @@ class Trainer:
         )
         self.summary_writer.add_scalars(
                 "loss",
-                {"train": float(loss.item())},
+                {"train": float(loss)},
                 self.step
         )
