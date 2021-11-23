@@ -77,7 +77,7 @@ class CNN(nn.Module):
         where preds is 15 for 15 class predictions
         """
         xs = xs.view(self.batch_size, self.num_clips, -1)
-        return xs
+        return xs.mean(1)
         
     @staticmethod
     def initialise_layer(layer):

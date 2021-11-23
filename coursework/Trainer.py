@@ -33,7 +33,6 @@ class Trainer:
         data, labels = batch
         
         logits = self.model.forward(data.to(self.device))
-        logits = logits.mean(1)
         preds = logits.detach().cpu().argmax(-1)
 
         step_results = {
@@ -51,7 +50,12 @@ class Trainer:
             'accuracy': []
         }
 
-        for batch in self.train_loader:
+        for batch in tqdm(
+            self.train_loader,
+            unit=" audio seq",
+            dynamic_ncols=True,
+            total=len(self.train_loader)
+        ):
             self.optimizer.zero_grad()
             step_results = self._step(batch)
 
@@ -60,7 +64,7 @@ class Trainer:
 
             self.optimizer.step()
 
-            print(f'loss: {loss.detach().cpu().item()}')
+            # print(f'loss: {loss.detach().cpu().item()}')
 
             train_results['loss'].append(loss.detach().cpu().item())
             train_results['accuracy'].append(step_results['accuracy'])
@@ -197,14 +201,14 @@ class Trainer:
 
                 for label, pred in zip(labels.cpu().numpy(), preds):
                     if label == pred:
-                        correct_pred[classes[label]] += 1
-                    total_pred[classes[label]] += 1
+                        correct_pred[label] += 1
+                    total_pred[label] += 1
         
         for classname, correct in correct_pred.items():
             accuracy = 100 * float(correct) / total_pred[classname]
             print("Accuracy for class {:5s} is: {:.1f}%".format(classes[classname], accuracy))
 
-    def log_metrics(self, epoch, accuracy, loss, data_load_time, step_time):
+    def log_metrics(self, epoch, accuracy, loss):
         self.summary_writer.add_scalar("epoch", epoch, self.step)
         self.summary_writer.add_scalars(
                 "accuracy",

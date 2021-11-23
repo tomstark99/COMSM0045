@@ -19,8 +19,8 @@ def main():
 
     clip_length = 3
     batch_size = 1
-    root_dir_train = os.getcwd() + '/ADL_DCASE_DATA/development'
-    root_dir_val = os.getcwd() + '/ADL_DCASE_DATA/evaluation'
+    root_dir_train = os.getcwd() + '/ADL_DCASE_DATA/dev'
+    root_dir_val = os.getcwd() + '/ADL_DCASE_DATA/dev'
 
     summary_writer = SummaryWriter("xddddd", flush_secs=1)
 
