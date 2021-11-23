@@ -19,14 +19,13 @@ class CNN(nn.Module):
         self, 
         clip_length: int, 
         num_clips: int,
-        batch_size: int = 64
     ):
         super().__init__()
         self.clip_length = clip_length
         self.num_clips = num_clips
-        self.batch_size = batch_size
         self.height = 60
         self.width = 50 * clip_length
+        self.num_classes = 15
 
         self.conv1 = nn.Conv2d(
             in_channels=1,
@@ -59,7 +58,8 @@ class CNN(nn.Module):
         
         where (C = 1) is the number of 'channels' of uniary depth
         """
-        xs = xs.view(self.batch_size * self.num_clips, 1, self.height, self.width)
+        print(xs.shape)
+        xs = xs.view(-1, 1, self.height, self.width)
         xs = self.batch1(self.conv1(xs))
         xs = self.pool1(F.relu(xs))
         xs = self.batch2(self.conv2(xs))
@@ -76,7 +76,7 @@ class CNN(nn.Module):
 
         where preds is 15 for 15 class predictions
         """
-        xs = xs.view(self.batch_size, self.num_clips, -1)
+        xs = xs.view(-1, self.num_clips, self.num_classes)
         return xs.mean(1)
         
     @staticmethod
