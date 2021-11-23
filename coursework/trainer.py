@@ -242,3 +242,9 @@ class Trainer:
                 {"train": float(loss)},
                 self.step
         )
+
+    def save_model_params(self):
+        torch.save(self.model.state_dict(), './model.pth')
+
+    def load_model_params(self):
+        self.model.load_state_dict(torch.load('./model.pth'))

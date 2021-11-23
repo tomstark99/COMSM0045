@@ -1,11 +1,12 @@
-import torch
-import os
-from torch.utils.data import DataLoader
-from torch.optim import Adam
-import torch.nn as nn
+from multiprocessing import cpu_count
 import argparse
 from pathlib import Path
+import os
 
+import torch
+import torch.nn as nn
+from torch.optim import Adam
+from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 
 from dataset import DCASE
@@ -43,7 +44,7 @@ parser.add_argument(
 )
 parser.add_argument(
     "--epochs",
-    default=10,
+    default=50,
     type=int,
     help="Number of epochs (passes through the entire dataset) to train for",
 )
@@ -61,9 +62,16 @@ parser.add_argument(
 )
 parser.add_argument(
     "--print-frequency",
-    default=100,
+    default=10,
     type=int,
     help="How frequently to print progress to the command line in number of steps",
+)
+parser.add_argument(
+    "-j",
+    "--num-workers",
+    default=cpu_count(),
+    type=int,
+    help="Number of worker processes used to load data.",
 )
 
 def main(args):
@@ -86,8 +94,20 @@ def main(args):
     model = CNN(clip_length, train_dataset.get_num_clips())
     optim = Adam(model.parameters(), lr=args.learning_rate)
 
-    train_loader = DataLoader(train_dataset, shuffle=True, batch_size = args.batch_size)
-    val_loader = DataLoader(val_dataset, shuffle=False, batch_size = args.batch_size)
+    train_loader = DataLoader(
+        train_dataset, 
+        shuffle=True, 
+        batch_size=args.batch_size,
+        pin_memory=True,
+        num_workers=args.num_workers
+    )
+    val_loader = DataLoader(
+        val_dataset, 
+        shuffle=False, 
+        batch_size=args.batch_size,
+        pin_memory=True,
+        num_workers=args.num_workers
+    )
 
     trainer = Trainer(
         model, 
@@ -105,6 +125,28 @@ def main(args):
         print_frequency=args.print_frequency,
         log_frequency=args.log_frequency
     )
+    trainer.save_model_params()
+
+def get_summary_writer_log_dir(args: argparse.Namespace) -> str:
+    """
+    Get a unique directory that hasn't been logged to before for use with a TB
+    SummaryWriter.
+    Args:
+        args: CLI Arguments
+    Returns:
+        Subdirectory of log_dir with unique subdirectory name to prevent multiple runs
+        from getting logged to the same TB log directory (which you can't easily
+        untangle in TB).
+    """
+    tb_log_dir_prefix = f'CNN_bs={args.batch_size}_lr={args.learning_rate}_run_'
+
+    i = 0
+    while i < 1000:
+        tb_log_dir = args.log_dir / (tb_log_dir_prefix + str(i))
+        if not tb_log_dir.exists():
+            return str(tb_log_dir)
+        i += 1
+    return str(tb_log_dir)
 
 if __name__ == '__main__':
     main(parser.parse_args())
