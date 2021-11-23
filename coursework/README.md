@@ -11,12 +11,12 @@ This is the zip file of the DCASE 2016 dataset. Unzipped it has the following fi
 ```bash
 $ tree -L 2 .
 .
-|-- development
-|   |-- audio
-|   `-- labels.csv
-`-- evaluation
-    |-- audio
-    `-- labels.csv
+├── development
+│   ├── audio
+│   └── labels.csv
+└── evaluation
+    ├── audio
+    └── labels.csv
 
 4 directories, 2 files
 ```
