@@ -86,8 +86,8 @@ def main(args):
     root_dir_train = args.dataset_root / 'development'
     root_dir_val = args.dataset_root / 'evaluation'
 
-	log_dir = get_summary_writer_log_dir(args)
-	print(f'writing logs to {log_dir}')
+    log_dir = get_summary_writer_log_dir(args)
+    print(f'writing logs to {log_dir}')
 
     summary_writer = SummaryWriter(str(log_dir), flush_secs=1)
 
