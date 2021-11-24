@@ -1,4 +1,5 @@
 from typing import Union, Dict, Any, Tuple
+from pathlib import Path
 
 import torch
 import torch.backends.cudnn
@@ -225,6 +226,9 @@ class Trainer:
                     if label == pred:
                         correct_pred[label] += 1
                     total_pred[label] += 1
+
+        print(correct_pred)
+        print(total_pred)
         
         for classname, correct in correct_pred.items():
             accuracy = 100 * float(correct) / total_pred[classname]
@@ -244,7 +248,7 @@ class Trainer:
         )
 
     def save_model_params(self):
-        torch.save(self.model.state_dict(), './model.pth')
+        torch.save(self.model.state_dict(), f'./{Path(self.summary_writer.log_dir).name}.pth')
 
-    def load_model_params(self):
-        self.model.load_state_dict(torch.load('./model.pth'))
+    def load_model_params(self, model_path):
+        self.model.load_state_dict(torch.load('./{model_path}.pth'))

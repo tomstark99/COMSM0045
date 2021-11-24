@@ -32,7 +32,7 @@ parser.add_argument(
 )
 parser.add_argument(
     "--learning-rate", 
-    default=1e-1, 
+    default=1e-2, 
     type=float, 
     help="Learning rate"
 )
@@ -73,10 +73,17 @@ parser.add_argument(
     type=int,
     help="Number of worker processes used to load data.",
 )
+parser.add_argument(
+    "--use-cuda",
+    default=True,
+    type=bool,
+    help="Use the GPU for training."
+)
+
 
 def main(args):
 
-    if torch.cuda.is_available():
+    if args.use_cuda and torch.cuda.is_available():
         # set to "cpu" if testing on lab machine
         device = torch.device("cuda")
     else:
@@ -128,6 +135,7 @@ def main(args):
         print_frequency=args.print_frequency,
         log_frequency=args.log_frequency
     )
+    trainer.print_per_class_accuracy()
     trainer.save_model_params()
 
 def get_summary_writer_log_dir(args: argparse.Namespace) -> str:
