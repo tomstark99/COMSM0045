@@ -213,7 +213,7 @@ class Trainer:
                   14: 'tram'}
 
         correct_pred = {classname: 0 for classname in classes.keys()}
-        incorrect_pred = {classname: {classname: 0} for classname in classes.keys()}
+        incorrect_pred = {classname: {class_n: 0 for class_n in classes.keys()} for classname in classes.keys()}
         total_pred = {classname: 0 for classname in classes.keys()}
 
         self.model.eval()
