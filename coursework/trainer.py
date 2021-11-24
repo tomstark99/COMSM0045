@@ -213,6 +213,7 @@ class Trainer:
                   14: 'tram'}
 
         correct_pred = {classname: 0 for classname in classes.keys()}
+        incorrect_pred = {classname: {classname: 0} for classname in classes.keys()}
         total_pred = {classname: 0 for classname in classes.keys()}
 
         self.model.eval()
@@ -225,10 +226,12 @@ class Trainer:
                 for label, pred in zip(labels.cpu().numpy(), preds):
                     if label == pred:
                         correct_pred[label] += 1
+                    incorrect_pred[label][pred] += 1
                     total_pred[label] += 1
 
         print(correct_pred)
-        print(total_pred)
+        print("=========================")
+        print(incorrect_pred)
         
         for classname, correct in correct_pred.items():
             accuracy = 100 * float(correct) / total_pred[classname]
