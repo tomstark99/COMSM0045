@@ -140,3 +140,6 @@ ADL_DCASE_DATA
 # BC4 logs
 events*
 slurm*
+
+# PyTorch model files
+*.pth

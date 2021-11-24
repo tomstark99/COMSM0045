@@ -89,6 +89,8 @@ def main(args):
     else:
         device = torch.device("cpu")
 
+    torch.cuda.empty_cache()
+
     clip_length = 3
     root_dir_train = args.dataset_root / 'development'
     root_dir_val = args.dataset_root / 'evaluation'
