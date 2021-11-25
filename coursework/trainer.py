@@ -151,12 +151,12 @@ class Trainer:
 
             self.summary_writer.add_scalar("epoch", epoch, self.step)
             if ((epoch + 1) % val_frequency) == 0:
-                self.validate()
+                self.validate(epoch)
         
         # self.print_per_class_accuracy()
 
 
-    def validate(self):
+    def validate(self, epoch):
 
         validation_results = self._val_step()
 
@@ -173,6 +173,11 @@ class Trainer:
                 {"test": average_loss},
                 self.step
         )
+
+        # save the model if the accuracy is greater than 85%
+        if accuracy > 0.85:
+            torch.save(self.model.state_dict(), f'./{epoch}.pth')
+
         print(f"validation loss: {average_loss:.5f}, accuracy: {accuracy * 100:2.2f}")
 
     def compute_accuracy(
