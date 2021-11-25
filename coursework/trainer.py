@@ -19,6 +19,7 @@ class Trainer:
         criterion: nn.Module,
         optimizer: Optimizer,
         summary_writer: SummaryWriter,
+        full_train: bool,
         device: torch.device,
     ):
         self.model = model.to(device)
@@ -28,6 +29,8 @@ class Trainer:
         self.criterion = criterion
         self.optimizer = optimizer
         self.summary_writer = summary_writer
+        self.full_train = full_train
+        self.current_accuracy = (0, 0)
         self.step = 0
 
     def _step(self, batch: Tuple[torch.Tensor, torch.Tensor]) -> Dict[str, Any]:
@@ -53,7 +56,9 @@ class Trainer:
 
         train_results = {
             'loss': [],
-            'accuracy': []
+            'accuracy': [],
+            'preds': [],
+            'labels': []
         }
 
         for batch in self.train_loader:# tqdm(
@@ -62,6 +67,8 @@ class Trainer:
             # dynamic_ncols=True,
             # total=len(self.train_loader)
         # ):
+            _, labels = batch
+
             self.optimizer.zero_grad()
             step_results = self._step(batch)
 
@@ -72,8 +79,10 @@ class Trainer:
 
             # print(f'loss: {loss.detach().cpu().item()}')
 
+            preds = step_results['logits'].argmax(-1).numpy()
             train_results['loss'].append(loss.detach().cpu().item())
-            train_results['accuracy'].append(step_results['accuracy'])
+            train_results['preds'].extend(list(preds))
+            train_results['labels'].extend(list(labels.numpy()))
 
             if ((self.step + 1) % log_frequency) == 0:
                 self.log_metrics(
@@ -89,6 +98,11 @@ class Trainer:
                 )
 
             self.step += 1
+
+        train_results['accuracy'] = self.compute_accuracy(
+            np.array(train_results["labels"]), 
+            np.array(train_results["preds"])
+        )
 
         return train_results
 
@@ -130,33 +144,59 @@ class Trainer:
         log_frequency: int = 10,
         start_epoch: int = 0
     ):
-        for epoch in tqdm(
-            range(start_epoch, epochs),
-            unit=" epoch",
-            dynamic_ncols=True
-        ):
+        if self.full_train:
+            for epoch in tqdm(
+                range(start_epoch, epochs),
+                unit=" epoch",
+                dynamic_ncols=True
+            ):
 
-            train_results = self._train_step(
-                epoch,
-                print_frequency,
-                log_frequency
-            )
+                train_results = self._train_step(
+                    epoch,
+                    print_frequency,
+                    log_frequency
+                )
 
-            """
-            list of losses and accuracies from 1 epoch over the whole dataset: 
-                len({loss, accuracy}) = len(dataloader)
-            """
-            # loss = train_results['loss']
-            # accuracy = train_results['accuracy']
+                """
+                list of losses and accuracies from 1 epoch over the whole dataset: 
+                    len({loss, accuracy}) = len(dataloader)
+                """
+                # loss = train_results['loss']
+                # accuracy = train_results['accuracy']
 
-            self.summary_writer.add_scalar("epoch", epoch, self.step)
-            if ((epoch + 1) % val_frequency) == 0:
-                self.validate()
-        
+                self.summary_writer.add_scalar("epoch", epoch, self.step)
+                if ((epoch + 1) % val_frequency) == 0:
+                    self.validate(epoch)
+        else:
+            epoch = start_epoch
+            epoch_since_last_increase = start_epoch
+            max_accuracy = self.current_accuracy[0]
+            while epoch_since_last_increase < 100:
+
+                train_results = self._train_step(
+                    epoch,
+                    print_frequency,
+                    log_frequency
+                )
+
+                self.summary_writer.add_scalar("epoch", epoch, self.step)
+                if ((epoch + 1) % val_frequency) == 0:
+                    self.validate(epoch)
+
+                if self.current_accuracy[0] > max_accuracy:
+                    max_accuracy = self.current_accuracy[0]
+                    self.summary_writer.add_scalar("max accuracy", max_accuracy, self.step)
+                    epoch_since_last_increase = 0
+                else:
+                    epoch_since_last_increase += 1
+                
+                epoch += 1
+
+
         # self.print_per_class_accuracy()
 
 
-    def validate(self):
+    def validate(self, epoch):
 
         validation_results = self._val_step()
 
@@ -173,6 +213,20 @@ class Trainer:
                 {"test": average_loss},
                 self.step
         )
+
+        if accuracy > self.current_accuracy[0]:
+            self.current_accuracy = (accuracy, epoch)
+
+        if self.full_train:
+            # save the model if the accuracy is greater than 85% # 0.862
+            if accuracy > 0.85:
+                self.save_model_params(f'{epoch}_{accuracy}')
+        else:
+            if epoch % 5 == 0:
+                if accuracy > self.current_accuracy[0]:
+                    self.save_model_params(f'{epoch}_{accuracy}')
+        # 0.835
+
         print(f"validation loss: {average_loss:.5f}, accuracy: {accuracy * 100:2.2f}")
 
     def compute_accuracy(
@@ -228,10 +282,6 @@ class Trainer:
                         correct_pred[label] += 1
                     incorrect_pred[label][pred] += 1
                     total_pred[label] += 1
-
-        print(correct_pred)
-        print("=========================")
-        print(incorrect_pred)
         
         for classname, correct in correct_pred.items():
             accuracy = 100 * float(correct) / total_pred[classname]
@@ -250,8 +300,8 @@ class Trainer:
                 self.step
         )
 
-    def save_model_params(self):
-        torch.save(self.model.state_dict(), f'./{Path(self.summary_writer.log_dir).name}.pth')
+    def save_model_params(self, model_path: str):
+        torch.save(self.model.state_dict(), f'./checkpoints/{model_path}.pth')
 
-    def load_model_params(self, model_path):
-        self.model.load_state_dict(torch.load('./{model_path}.pth'))
+    def load_model_params(self, model_path: str):
+        self.model.load_state_dict(torch.load(f'/checkpoints/{model_path}.pth', map_location=torch.device('cpu')))

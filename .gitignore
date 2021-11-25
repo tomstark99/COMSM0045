@@ -142,4 +142,4 @@ events*
 slurm*
 
 # PyTorch model files
-*.pth
+# *.pth

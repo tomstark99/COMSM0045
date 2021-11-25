@@ -111,8 +111,7 @@ def train_test_loader(dataset: DCASE, batch_size: int, val_split: float) -> Tupl
 def main(args):
 
     if args.use_cuda and torch.cuda.is_available():
-        # set to "cpu" if testing on lab machine
-        device = torch.device("cpu")
+        device = torch.device("cuda")
     else:
         device = torch.device("cpu")
 
@@ -133,10 +132,7 @@ def main(args):
     model = CNN(clip_length, train_dataset.get_num_clips())
     optim = Adam(model.parameters(), lr=args.learning_rate)
 
-    print(args.full_train)
-
     if args.full_train:
-        print("fksake")
         train_loader = DataLoader(
             train_dataset, 
             shuffle=True, 
@@ -152,7 +148,6 @@ def main(args):
             num_workers=args.num_workers
         )
     else:
-        print("alie")
         train_loader, val_loader = train_test_loader(train_dataset, args.batch_size, args.train_split)
 
     print(len(train_loader))
@@ -175,7 +170,7 @@ def main(args):
         log_frequency=args.log_frequency
     )
     trainer.print_per_class_accuracy()
-    trainer.save_model_params()
+    trainer.save_model_params(Path(log_dir).name)
 
 def get_summary_writer_log_dir(args: argparse.Namespace) -> str:
     """
