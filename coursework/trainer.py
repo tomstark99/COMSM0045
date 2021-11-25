@@ -176,7 +176,7 @@ class Trainer:
 
         # save the model if the accuracy is greater than 85%
         if accuracy > 0.85:
-            torch.save(self.model.state_dict(), f'./{epoch}.pth')
+            torch.save(self.model.state_dict(), f'./epochs/{epoch}_{accuracy}.pth')
 
         print(f"validation loss: {average_loss:.5f}, accuracy: {accuracy * 100:2.2f}")
 
