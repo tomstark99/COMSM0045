@@ -77,14 +77,14 @@ parser.add_argument(
 )
 parser.add_argument(
     "--use-cuda",
-    default=True,
-    type=bool,
+    default=False,
+    action='store_true',
     help="Use the GPU for training."
 )
 parser.add_argument(
     "--full-train",
-    default=True,
-    type=bool,
+    default=False,
+    action='store_true',
     help="Train on the full train/test dataset."
 )
 parser.add_argument(
@@ -93,9 +93,6 @@ parser.add_argument(
     type=float,
     help="Percentage of the training data to split as a validation set."
 )
-
-def no_collate(args):
-    return args
 
 def train_test_loader(dataset: DCASE, batch_size: int, val_split: float) -> Tuple[DataLoader, DataLoader]:
     if val_split < 0.0 or val_split > 1.0:
@@ -109,7 +106,7 @@ def train_test_loader(dataset: DCASE, batch_size: int, val_split: float) -> Tupl
 
     train_sampler = SubsetRandomSampler(train_idx)
     test_sampler = SubsetRandomSampler(test_idx)
-    return DataLoader(dataset, batch_size=batch_size, sampler=train_sampler, collate_fn=no_collate), DataLoader(dataset, batch_size=batch_size, sampler=test_sampler, collate_fn=no_collate)
+    return DataLoader(dataset, batch_size=batch_size, sampler=train_sampler), DataLoader(dataset, batch_size=batch_size, sampler=test_sampler)
 
 def main(args):
 
@@ -136,6 +133,8 @@ def main(args):
     model = CNN(clip_length, train_dataset.get_num_clips())
     optim = Adam(model.parameters(), lr=args.learning_rate)
 
+    print(args.full_train)
+
     if args.full_train:
         print("fksake")
         train_loader = DataLoader(
@@ -155,6 +154,9 @@ def main(args):
     else:
         print("alie")
         train_loader, val_loader = train_test_loader(train_dataset, args.batch_size, args.train_split)
+
+    print(len(train_loader))
+    print(len(val_loader))
 
     trainer = Trainer(
         model, 
