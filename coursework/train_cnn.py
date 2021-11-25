@@ -150,16 +150,14 @@ def main(args):
     else:
         train_loader, val_loader = train_test_loader(train_dataset, args.batch_size, args.train_split)
 
-    print(len(train_loader))
-    print(len(val_loader))
-
     trainer = Trainer(
         model, 
         train_loader, 
         val_loader, 
         nn.CrossEntropyLoss(), 
         optim, 
-        summary_writer, 
+        summary_writer,
+        args.full_train,
         device
     )
 
