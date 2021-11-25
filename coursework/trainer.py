@@ -214,18 +214,18 @@ class Trainer:
                 self.step
         )
 
-        if accuracy > self.current_accuracy[0]:
-            self.current_accuracy = (accuracy, epoch)
-
         if self.full_train:
             # save the model if the accuracy is greater than 85% # 0.862
             if accuracy > 0.85:
                 self.save_model_params(f'{epoch}_{accuracy}')
         else:
+            # 0.835
             if epoch % 5 == 0:
                 if accuracy > self.current_accuracy[0]:
                     self.save_model_params(f'{epoch}_{accuracy}')
-        # 0.835
+
+        if accuracy > self.current_accuracy[0]:
+            self.current_accuracy = (accuracy, epoch)
 
         print(f"validation loss: {average_loss:.5f}, accuracy: {accuracy * 100:2.2f}")
 
