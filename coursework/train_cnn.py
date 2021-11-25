@@ -1,12 +1,14 @@
 from multiprocessing import cpu_count
+from typing import Tuple
 import argparse
 from pathlib import Path
 import os
 
+import numpy as np
 import torch
 import torch.nn as nn
 from torch.optim import Adam
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, SubsetRandomSampler
 from torch.utils.tensorboard import SummaryWriter
 
 from dataset import DCASE
@@ -32,7 +34,7 @@ parser.add_argument(
 )
 parser.add_argument(
     "--learning-rate", 
-    default=1e-1, 
+    default=1e-3, 
     type=float, 
     help="Learning rate"
 )
@@ -73,14 +75,51 @@ parser.add_argument(
     type=int,
     help="Number of worker processes used to load data.",
 )
+parser.add_argument(
+    "--use-cuda",
+    default=True,
+    type=bool,
+    help="Use the GPU for training."
+)
+parser.add_argument(
+    "--full-train",
+    default=True,
+    type=bool,
+    help="Train on the full train/test dataset."
+)
+parser.add_argument(
+    "--train-split",
+    default=0.25,
+    type=float,
+    help="Percentage of the training data to split as a validation set."
+)
+
+def no_collate(args):
+    return args
+
+def train_test_loader(dataset: DCASE, batch_size: int, val_split: float) -> Tuple[DataLoader, DataLoader]:
+    if val_split < 0.0 or val_split > 1.0:
+        raise ValueError(f'training split should be between 0 and 1, but was {val_split}')
+
+    idxs = list(range(len(dataset)))
+    split = int(np.floor(val_split * len(dataset)))
+    np.random.shuffle(idxs)
+
+    train_idx, test_idx = idxs[split:], idxs[:split]
+
+    train_sampler = SubsetRandomSampler(train_idx)
+    test_sampler = SubsetRandomSampler(test_idx)
+    return DataLoader(dataset, batch_size=batch_size, sampler=train_sampler, collate_fn=no_collate), DataLoader(dataset, batch_size=batch_size, sampler=test_sampler, collate_fn=no_collate)
 
 def main(args):
 
-    if torch.cuda.is_available():
+    if args.use_cuda and torch.cuda.is_available():
         # set to "cpu" if testing on lab machine
-        device = torch.device("cuda")
+        device = torch.device("cpu")
     else:
         device = torch.device("cpu")
+
+    torch.cuda.empty_cache()
 
     clip_length = 3
     root_dir_train = args.dataset_root / 'development'
@@ -97,20 +136,25 @@ def main(args):
     model = CNN(clip_length, train_dataset.get_num_clips())
     optim = Adam(model.parameters(), lr=args.learning_rate)
 
-    train_loader = DataLoader(
-        train_dataset, 
-        shuffle=True, 
-        batch_size=args.batch_size,
-        pin_memory=True,
-        num_workers=args.num_workers
-    )
-    val_loader = DataLoader(
-        val_dataset, 
-        shuffle=False, 
-        batch_size=args.batch_size,
-        pin_memory=True,
-        num_workers=args.num_workers
-    )
+    if args.full_train:
+        print("fksake")
+        train_loader = DataLoader(
+            train_dataset, 
+            shuffle=True, 
+            batch_size=args.batch_size,
+            pin_memory=True,
+            num_workers=args.num_workers
+        )
+        val_loader = DataLoader(
+            val_dataset, 
+            shuffle=False, 
+            batch_size=args.batch_size,
+            pin_memory=True,
+            num_workers=args.num_workers
+        )
+    else:
+        print("alie")
+        train_loader, val_loader = train_test_loader(train_dataset, args.batch_size, args.train_split)
 
     trainer = Trainer(
         model, 
@@ -128,6 +172,7 @@ def main(args):
         print_frequency=args.print_frequency,
         log_frequency=args.log_frequency
     )
+    trainer.print_per_class_accuracy()
     trainer.save_model_params()
 
 def get_summary_writer_log_dir(args: argparse.Namespace) -> str:
