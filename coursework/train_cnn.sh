@@ -9,12 +9,4 @@ module purge
 # load in the module dependencies for this script
 module load "languages/anaconda3/2019.07-3.6.5-tflow-1.14"
 
-python train_cnn.py --learning-rate 1e-2
-python train_cnn.py --learning-rate 5e-2
-python train_cnn.py --learning-rate 1e-1
-python train_cnn.py --learning-rate 5e-1
-python train_cnn.py --learning-rate 1e1
-python train_cnn.py --learning-rate 5e1
-python train_cnn.py --learning-rate 1e2
-python train_cnn.py --learning-rate 5e2
-
+python train_cnn.py --epoch 200 --batch-size 64 --learning-rate 1e-3
