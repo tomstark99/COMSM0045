@@ -144,7 +144,6 @@ class Trainer:
         log_frequency: int = 10,
         start_epoch: int = 0
     ):
-<<<<<<< HEAD
         if self.full_train:
             for epoch in tqdm(
                 range(start_epoch, epochs),
@@ -194,31 +193,6 @@ class Trainer:
                 epoch += 1
 
 
-=======
-        for epoch in tqdm(
-            range(start_epoch, epochs),
-            unit=" epoch",
-            dynamic_ncols=True
-        ):
-
-            train_results = self._train_step(
-                epoch,
-                print_frequency,
-                log_frequency
-            )
-
-            """
-            list of losses and accuracies from 1 epoch over the whole dataset: 
-                len({loss, accuracy}) = len(dataloader)
-            """
-            # loss = train_results['loss']
-            # accuracy = train_results['accuracy']
-
-            self.summary_writer.add_scalar("epoch", epoch, self.step)
-            if ((epoch + 1) % val_frequency) == 0:
-                self.validate(epoch)
-        
->>>>>>> 5da69fcffa7d29f6727cea29e5457ed02262cf3b
         # self.print_per_class_accuracy()
 
 
@@ -240,7 +214,6 @@ class Trainer:
                 self.step
         )
 
-<<<<<<< HEAD
         if accuracy > self.current_accuracy[0]:
             self.current_accuracy = (accuracy, epoch)
 
@@ -253,11 +226,6 @@ class Trainer:
                 if accuracy > self.current_accuracy[0]:
                     self.save_model_params(f'{epoch}_{accuracy}')
         # 0.835
-=======
-        # save the model if the accuracy is greater than 85%
-        if accuracy > 0.85:
-            torch.save(self.model.state_dict(), f'./epochs/{epoch}_{accuracy}.pth')
->>>>>>> 5da69fcffa7d29f6727cea29e5457ed02262cf3b
 
         print(f"validation loss: {average_loss:.5f}, accuracy: {accuracy * 100:2.2f}")
 
