@@ -30,12 +30,27 @@ class Trainer:
         self.optimizer = optimizer
         self.summary_writer = summary_writer
         self.full_train = full_train
+        self.batch_size = train_loader.batch_size
+        self.max_batch_size = 64
         self.current_accuracy = (0, 0)
         self.step = 0
 
     def _step(self, batch: Tuple[torch.Tensor, torch.Tensor]) -> Dict[str, Any]:
         data, labels = batch
         
+        """
+        FOR CHUNKING BATCHES OVER 64
+        n_chunks = int(np.ceil(self.batch_size/self.max_batch_size))
+        chunks = torch.chunk(data, n_chunks, dim=0)
+
+        chunk_logits = []
+
+        for chunk in chunks:
+            chunk_out = self.model.forward(chunk.to(self.device))
+            chunk_logits.append(chunk_out)
+
+        logits = torch.cat(chunk_logits) 
+        """
         logits = self.model.forward(data.to(self.device))
         preds = logits.detach().cpu().argmax(-1)
 
@@ -171,7 +186,7 @@ class Trainer:
             epoch = start_epoch
             epoch_since_last_increase = start_epoch
             max_accuracy = self.current_accuracy[0]
-            while epoch_since_last_increase < 100:
+            while epoch_since_last_increase < 16:
 
                 train_results = self._train_step(
                     epoch,
@@ -186,7 +201,10 @@ class Trainer:
                 if self.current_accuracy[0] > max_accuracy:
                     max_accuracy = self.current_accuracy[0]
                     self.summary_writer.add_scalar("max accuracy", max_accuracy, self.step)
-                    epoch_since_last_increase = 0
+                    if max_accuracy >= 0.835:
+                        epoch_since_last_increase = 16
+                    else:
+                        epoch_since_last_increase = 0
                 else:
                     epoch_since_last_increase += 1
                 
@@ -216,7 +234,7 @@ class Trainer:
 
         if self.full_train:
             # save the model if the accuracy is greater than 85% # 0.862
-            if accuracy > 0.85:
+            if accuracy > 0.862:
                 self.save_model_params(f'{epoch}_{accuracy}')
         else:
             # 0.835

@@ -5,10 +5,11 @@ from pathlib import Path
 import os
 
 import numpy as np
+from numpy import testing
 import torch
 import torch.nn as nn
 from torch.optim import Adam
-from torch.utils.data import DataLoader, SubsetRandomSampler
+from torch.utils.data import DataLoader, SubsetRandomSampler, Subset, random_split
 from torch.utils.tensorboard import SummaryWriter
 
 from dataset import DCASE
@@ -106,9 +107,15 @@ def train_test_loader(dataset: DCASE, batch_size: int, val_split: float) -> Tupl
 
     train_sampler = SubsetRandomSampler(train_idx)
     test_sampler = SubsetRandomSampler(test_idx)
-    return DataLoader(dataset, batch_size=batch_size, sampler=train_sampler), DataLoader(dataset, batch_size=batch_size, sampler=test_sampler)
+
+    train_subset = Subset(dataset, train_idx)
+    val_subset = Subset(dataset, test_idx)
+
+    return DataLoader(train_subset, batch_size=batch_size, shuffle=True), DataLoader(val_subset, batch_size=batch_size, shuffle=False)
 
 def main(args):
+
+    torch.cuda.empty_cache()
 
     if args.use_cuda and torch.cuda.is_available():
         device = torch.device("cuda")
@@ -192,4 +199,5 @@ def get_summary_writer_log_dir(args: argparse.Namespace) -> str:
     return str(tb_log_dir)
 
 if __name__ == '__main__':
+    torch.cuda.empty_cache()
     main(parser.parse_args())
