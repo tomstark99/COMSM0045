@@ -105,8 +105,8 @@ def train_test_loader(dataset: DCASE, batch_size: int, val_split: float) -> Tupl
 
     train_idx, test_idx = idxs[split:], idxs[:split]
 
-    train_sampler = SubsetRandomSampler(train_idx)
-    test_sampler = SubsetRandomSampler(test_idx)
+    #train_sampler = SubsetRandomSampler(train_idx)
+    #test_sampler = SubsetRandomSampler(test_idx)
 
     train_subset = Subset(dataset, train_idx)
     val_subset = Subset(dataset, test_idx)
@@ -140,6 +140,7 @@ def main(args):
     optim = Adam(model.parameters(), lr=args.learning_rate)
 
     if args.full_train:
+        print('full')
         train_loader = DataLoader(
             train_dataset, 
             shuffle=True, 
@@ -155,6 +156,7 @@ def main(args):
             num_workers=args.num_workers
         )
     else:
+        print('non-full')
         train_loader, val_loader = train_test_loader(train_dataset, args.batch_size, args.train_split)
 
     trainer = Trainer(
