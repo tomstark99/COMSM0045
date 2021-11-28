@@ -3,6 +3,7 @@ from typing import Tuple
 import argparse
 from pathlib import Path
 import os
+import gc
 
 import numpy as np
 from numpy import testing
@@ -114,8 +115,10 @@ def train_test_loader(dataset: DCASE, batch_size: int, val_split: float) -> Tupl
     return DataLoader(train_subset, batch_size=batch_size, shuffle=True), DataLoader(val_subset, batch_size=batch_size, shuffle=False)
 
 def main(args):
-
+    
+    gc.collect()
     torch.cuda.empty_cache()
+
 
     if args.use_cuda and torch.cuda.is_available():
         device = torch.device("cuda")
