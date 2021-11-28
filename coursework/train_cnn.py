@@ -114,7 +114,7 @@ def train_test_loader(dataset: DCASE, batch_size: int, val_split: float) -> Tupl
     # print(len(train_subset))
     # print(len(val_subset))
 
-    return DataLoader(train_subset, batch_size=batch_size, shuffle=True), DataLoader(val_subset, batch_size=batch_size, shuffle=False)
+    return DataLoader(train_subset, batch_size=batch_size, shuffle=True), DataLoader(val_subset, batch_size=batch_size, shuffle=True)
 
 def main(args):
     
@@ -174,7 +174,7 @@ def main(args):
         nn.CrossEntropyLoss(), 
         optim, 
         summary_writer,
-        True,
+        args.full_train,
         device
     )
 
