@@ -111,6 +111,8 @@ def train_test_loader(dataset: DCASE, batch_size: int, val_split: float) -> Tupl
 
     train_subset = Subset(dataset, train_idx)
     val_subset = Subset(dataset, test_idx)
+    # print(len(train_subset))
+    # print(len(val_subset))
 
     return DataLoader(train_subset, batch_size=batch_size, shuffle=True), DataLoader(val_subset, batch_size=batch_size, shuffle=False)
 
@@ -162,6 +164,9 @@ def main(args):
         print('non-full')
         train_loader, val_loader = train_test_loader(train_dataset, args.batch_size, args.train_split)
 
+    print(len(train_loader))
+    print(len(val_loader))
+
     trainer = Trainer(
         model, 
         train_loader, 
@@ -169,7 +174,7 @@ def main(args):
         nn.CrossEntropyLoss(), 
         optim, 
         summary_writer,
-        args.full_train,
+        True,
         device
     )
 
