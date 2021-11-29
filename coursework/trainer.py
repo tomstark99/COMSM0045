@@ -186,7 +186,7 @@ class Trainer:
             epoch = start_epoch
             epoch_since_last_increase = start_epoch
             max_accuracy = self.current_accuracy[0]
-            while epoch_since_last_increase < 16:
+            while epoch_since_last_increase < 100:
 
                 train_results = self._train_step(
                     epoch,

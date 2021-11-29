@@ -13,7 +13,7 @@ from torch.optim import Adam
 from torch.utils.data import DataLoader, SubsetRandomSampler, Subset, random_split
 from torch.utils.tensorboard import SummaryWriter
 
-from dataset import DCASE
+from dataset import DCASE, NF_DCASE
 from trainer import Trainer
 from CNN import CNN
 
@@ -97,9 +97,10 @@ parser.add_argument(
 )
 
 def train_test_loader(dataset: DCASE, batch_size: int, val_split: float) -> Tuple[DataLoader, DataLoader]:
+    
+    """
     if val_split < 0.0 or val_split > 1.0:
         raise ValueError(f'training split should be between 0 and 1, but was {val_split}')
-
     idxs = list(range(len(dataset)))
     split = int(np.floor(val_split * len(dataset)))
     np.random.shuffle(idxs)
@@ -115,12 +116,51 @@ def train_test_loader(dataset: DCASE, batch_size: int, val_split: float) -> Tupl
     # print(len(val_subset))
 
     return DataLoader(train_subset, batch_size=batch_size, shuffle=True), DataLoader(val_subset, batch_size=batch_size, shuffle=True)
+    """
+
+    labels = {label: [clips for clips in dataset._labels[dataset._labels['label']==label].clip_no.unique()] for label in dataset._labels['label']}
+
+    train = []
+    test = []
+
+    for label, clips in labels.items():
+        total = list(range(len(clips)))
+        np.random.shuffle(total)
+        train_idx, test_idx = total[3:], total[:3]
+        
+        for i in train_idx:
+            train.append(clips[i])
+        for j in test_idx:
+            test.append(clips[j])
+
+    train_clips = []
+    test_clips = []
+
+    for tr in train:
+        temp = dataset._labels[dataset._labels['clip_no'] == tr].file
+        train_clips.extend(temp)
+        
+    for te in test:
+        temp = dataset._labels[dataset._labels['clip_no'] == te].file
+        test_clips.extend(temp)
+
+    train_subset = NF_DCASE(
+        dataset._root_dir, 
+        dataset._clip_duration, 
+        train_clips
+    )
+    val_subset = NF_DCASE(
+        dataset._root_dir, 
+        dataset._clip_duration, 
+        test_clips
+    )
+
+    return DataLoader(train_subset, batch_size=batch_size, shuffle=True), DataLoader(val_subset, batch_size=batch_size, shuffle=False)
 
 def main(args):
     
     gc.collect()
     torch.cuda.empty_cache()
-
 
     if args.use_cuda and torch.cuda.is_available():
         device = torch.device("cuda")
@@ -139,7 +179,7 @@ def main(args):
     summary_writer = SummaryWriter(str(log_dir), flush_secs=1)
 
     train_dataset = DCASE(root_dir_train, clip_length)
-    val_dataset = DCASE(root_dir_val, clip_length)
+    # val_dataset = DCASE(root_dir_val, clip_length)
 
     model = CNN(clip_length, train_dataset.get_num_clips())
     optim = Adam(model.parameters(), lr=args.learning_rate)
