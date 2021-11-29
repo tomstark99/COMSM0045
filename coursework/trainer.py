@@ -242,7 +242,7 @@ class Trainer:
             #     if accuracy > self.current_accuracy[0]:
             #         self.save_model_params(f'nonfull/{epoch}_{accuracy}')
             if accuracy > 0.835:
-                self.save_model_params(f'nonfull/{epoch}_{accuracy}')
+                self.save_model_params(f'non_full/{epoch}_{accuracy}')
 
         if accuracy > self.current_accuracy[0]:
             self.current_accuracy = (accuracy, epoch)
