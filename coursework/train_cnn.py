@@ -13,7 +13,7 @@ from torch.optim import Adam
 from torch.utils.data import DataLoader, SubsetRandomSampler, Subset, random_split
 from torch.utils.tensorboard import SummaryWriter
 
-from dataset import DCASE, NF_DCASE
+from dataset import DCASE, NF_DCASE, V_DCASE
 from trainer import Trainer
 from CNN import CNN
 
@@ -179,13 +179,12 @@ def main(args):
     summary_writer = SummaryWriter(str(log_dir), flush_secs=1)
 
     train_dataset = DCASE(root_dir_train, clip_length)
-    # val_dataset = DCASE(root_dir_val, clip_length)
 
     model = CNN(clip_length, train_dataset.get_num_clips())
     optim = Adam(model.parameters(), lr=args.learning_rate)
 
     if args.full_train:
-        print('full')
+        val_dataset = V_DCASE(root_dir_val, clip_length)
         train_loader = DataLoader(
             train_dataset, 
             shuffle=True, 
@@ -201,11 +200,7 @@ def main(args):
             num_workers=args.num_workers
         )
     else:
-        print('non-full')
         train_loader, val_loader = train_test_loader(train_dataset, args.batch_size, args.train_split)
-
-    print(len(train_loader))
-    print(len(val_loader))
 
     trainer = Trainer(
         model, 
