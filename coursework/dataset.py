@@ -7,7 +7,7 @@ from pathlib import Path
 import pandas as pd
 
 class DCASE(Dataset):
-    def __init__(self, root_dir: str, clip_duration: int):
+    def __init__(self, root_dir: str, clip_duration: int, flip = False):
         self._root_dir = Path(root_dir)
         self._labels = pd.read_csv((self._root_dir / 'labels.csv'), names=['file', 'label'])
         self._labels['label'] = self._labels.label.astype('category').cat.codes.astype('int') #create categorical labels
@@ -16,6 +16,7 @@ class DCASE(Dataset):
         self._total_duration = 30 #DCASE audio length is 30s
         self._num_clips = self._total_duration // clip_duration 
         self._data_len = len(self._labels)
+        self.flip = flip
 
     def __getitem__(self, index):
         #reading spectrograms
@@ -43,6 +44,8 @@ class DCASE(Dataset):
             spec_clip = spec[:, start:end]
             #spec_clip = torch.squeeze(spec_clip)
             all_clips.append(spec_clip)
+            if self.flip:
+                all_clips.append(torch.flip(spec_clip, [1, 0]))
 
         specs = torch.stack(all_clips)
         return specs

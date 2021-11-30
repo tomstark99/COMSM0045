@@ -16,6 +16,7 @@ from torch.utils.tensorboard import SummaryWriter
 from dataset import DCASE, NF_DCASE, V_DCASE
 from trainer import Trainer
 from CNN import CNN
+from torchvision import transforms
 
 parser = argparse.ArgumentParser(
     description="Train a simple CNN on CIFAR-10",
@@ -163,6 +164,9 @@ def train_test_loader(dataset: DCASE, batch_size: int, val_split: float) -> Tupl
 
     return DataLoader(train_subset, batch_size=batch_size, shuffle=True), DataLoader(val_subset, batch_size=batch_size, shuffle=False)
 
+# def train_flip_loader(dataset: DCASE):
+
+
 def main(args):
     
     gc.collect()
@@ -183,8 +187,10 @@ def main(args):
     print(f'writing logs to {log_dir}')
 
     summary_writer = SummaryWriter(str(log_dir), flush_secs=1)
-
-    train_dataset = DCASE(root_dir_train, clip_length)
+    if args.data_aug_hflip:
+        train_dataset = DCASE(root_dir_train, clip_length, True)
+    else:
+        train_dataset = DCASE(root_dir_train, clip_length, False)
 
     model = CNN(clip_length, train_dataset.get_num_clips())
     optim = Adam(model.parameters(), lr=args.learning_rate)
