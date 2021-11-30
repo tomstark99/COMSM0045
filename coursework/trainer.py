@@ -32,7 +32,7 @@ class Trainer:
         self.optimizer = optimizer
         self.summary_writer = summary_writer
         self.full_train = full_train
-        self.batch_size = train_loader.batch_size
+        self.batch_size = train_loader.batch_size * 2 if to_flip else train_loader.batch_size
         self.max_batch_size = 64
         self.current_accuracy = (0, 0)
         self.step = 0
