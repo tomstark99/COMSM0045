@@ -9,6 +9,7 @@ from torch.optim.optimizer import Optimizer
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
+import random
 
 class Trainer:
     def __init__(
@@ -21,6 +22,7 @@ class Trainer:
         summary_writer: SummaryWriter,
         full_train: bool,
         device: torch.device,
+        to_flip: bool
     ):
         self.model = model.to(device)
         self.device = device
@@ -34,8 +36,9 @@ class Trainer:
         self.max_batch_size = 64
         self.current_accuracy = (0, 0)
         self.step = 0
+        self.to_flip = to_flip
 
-    def _step(self, batch: Tuple[torch.Tensor, torch.Tensor]) -> Dict[str, Any]:
+    def _step(self, batch: Tuple[torch.Tensor, torch.Tensor], flip = False) -> Dict[str, Any]:
         data, labels = batch
         
         """
@@ -51,6 +54,11 @@ class Trainer:
 
         logits = torch.cat(chunk_logits) 
         """
+        if flip:
+            for d in data:
+                random_bit = random.getrandbits(1)
+                if random_bit:
+                    torch.flip(d, [1, 0])
         logits = self.model.forward(data.to(self.device))
         preds = logits.detach().cpu().argmax(-1)
 
@@ -85,7 +93,7 @@ class Trainer:
             _, labels = batch
 
             self.optimizer.zero_grad()
-            step_results = self._step(batch)
+            step_results = self._step(batch, self.to_flip)
 
             loss = step_results['loss']
             loss.backward()

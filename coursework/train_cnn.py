@@ -96,6 +96,12 @@ parser.add_argument(
     help="Percentage of the training data to split as a validation set."
 )
 
+parser.add_argument(
+    "--data-aug-hflip", 
+    action="store_true",
+    default = False
+)
+
 def train_test_loader(dataset: DCASE, batch_size: int, val_split: float) -> Tuple[DataLoader, DataLoader]:
     
     """
@@ -185,6 +191,7 @@ def main(args):
 
     if args.full_train:
         val_dataset = V_DCASE(root_dir_val, clip_length)
+        print(val_dataset)
         train_loader = DataLoader(
             train_dataset, 
             shuffle=True, 
@@ -210,7 +217,8 @@ def main(args):
         optim, 
         summary_writer,
         args.full_train,
-        device
+        device,
+        args.data_aug_hflip
     )
 
     trainer.train(
@@ -233,7 +241,7 @@ def get_summary_writer_log_dir(args: argparse.Namespace) -> str:
         from getting logged to the same TB log directory (which you can't easily
         untangle in TB).
     """
-    tb_log_dir_prefix = f'CNN_bs={args.batch_size}_lr={args.learning_rate}_run_'
+    tb_log_dir_prefix = f'CNN_bs={args.batch_size}_lr={args.learning_rate}_run_' + ("hflip_" if args.data_aug_hflip else "") 
 
     i = 0
     while i < 1000:
