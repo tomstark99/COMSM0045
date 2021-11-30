@@ -191,7 +191,7 @@ def main(args):
 
     if args.full_train:
         val_dataset = V_DCASE(root_dir_val, clip_length)
-        print(val_dataset)
+
         train_loader = DataLoader(
             train_dataset, 
             shuffle=True, 
@@ -227,6 +227,7 @@ def main(args):
         print_frequency=args.print_frequency,
         log_frequency=args.log_frequency
     )
+
     trainer.print_per_class_accuracy()
     trainer.save_model_params(Path(log_dir).name)
 
@@ -241,7 +242,10 @@ def get_summary_writer_log_dir(args: argparse.Namespace) -> str:
         from getting logged to the same TB log directory (which you can't easily
         untangle in TB).
     """
-    tb_log_dir_prefix = f'CNN_bs={args.batch_size}_lr={args.learning_rate}_run_' + ("hflip_" if args.data_aug_hflip else "") 
+    if args.full_train:
+        tb_log_dir_prefix = f'full_CNN_bs={args.batch_size}_lr={args.learning_rate}_run_' + ("hflip_" if args.data_aug_hflip else "")
+    else:
+        tb_log_dir_prefix = f'non_full_CNN_bs={args.batch_size}_lr={args.learning_rate}_run_' + ("hflip_" if args.data_aug_hflip else "")
 
     i = 0
     while i < 1000:
