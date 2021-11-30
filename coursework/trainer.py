@@ -54,11 +54,19 @@ class Trainer:
 
         logits = torch.cat(chunk_logits) 
         """
+        # if flip:
+        #     for d in data:
+        #         random_bit = random.getrandbits(1)
+        #         if random_bit:
+        #             torch.flip(d, [1, 0])
+        #print(data.shape)
         if flip:
             for d in data:
-                random_bit = random.getrandbits(1)
-                if random_bit:
-                    torch.flip(d, [1, 0])
+                #print(d.shape)
+                temp = torch.flip(d, [1, 0])
+                #print(temp.shape)
+                data = torch.cat((data, temp.unsqueeze(0)), dim=0)
+                #print(data.shape)
         logits = self.model.forward(data.to(self.device))
         preds = logits.detach().cpu().argmax(-1)
 
