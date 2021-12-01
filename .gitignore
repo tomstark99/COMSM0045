@@ -143,3 +143,4 @@ slurm*
 
 # PyTorch model files
 # *.pth
+**/checkpoints

@@ -16,10 +16,11 @@ from torch.utils.tensorboard import SummaryWriter
 from dataset import DCASE, NF_DCASE, V_DCASE
 from trainer import Trainer
 from CNN import CNN
-from torchvision import transforms
+# from torchvision import transforms
+from transforms import HorizontalFlip
 
 parser = argparse.ArgumentParser(
-    description="Train a simple CNN on CIFAR-10",
+    description="CW CNN training for DCASE 2016",
     formatter_class=argparse.ArgumentDefaultsHelpFormatter,
 )
 
@@ -96,35 +97,14 @@ parser.add_argument(
     type=float,
     help="Percentage of the training data to split as a validation set."
 )
-
 parser.add_argument(
     "--data-aug-hflip", 
-    action="store_true",
-    default = False
+    default=False,
+    action="store_true"
 )
 
 def train_test_loader(dataset: DCASE, batch_size: int, val_split: float) -> Tuple[DataLoader, DataLoader]:
     
-    """
-    if val_split < 0.0 or val_split > 1.0:
-        raise ValueError(f'training split should be between 0 and 1, but was {val_split}')
-    idxs = list(range(len(dataset)))
-    split = int(np.floor(val_split * len(dataset)))
-    np.random.shuffle(idxs)
-
-    train_idx, test_idx = idxs[split:], idxs[:split]
-
-    #train_sampler = SubsetRandomSampler(train_idx)
-    #test_sampler = SubsetRandomSampler(test_idx)
-
-    train_subset = Subset(dataset, train_idx)
-    val_subset = Subset(dataset, test_idx)
-    # print(len(train_subset))
-    # print(len(val_subset))
-
-    return DataLoader(train_subset, batch_size=batch_size, shuffle=True), DataLoader(val_subset, batch_size=batch_size, shuffle=True)
-    """
-
     labels = {label: [clips for clips in dataset._labels[dataset._labels['label']==label].clip_no.unique()] for label in dataset._labels['label']}
 
     train = []
@@ -164,9 +144,6 @@ def train_test_loader(dataset: DCASE, batch_size: int, val_split: float) -> Tupl
 
     return DataLoader(train_subset, batch_size=batch_size, shuffle=True), DataLoader(val_subset, batch_size=batch_size, shuffle=False)
 
-# def train_flip_loader(dataset: DCASE):
-
-
 def main(args):
     
     gc.collect()
@@ -187,10 +164,12 @@ def main(args):
     print(f'writing logs to {log_dir}')
 
     summary_writer = SummaryWriter(str(log_dir), flush_secs=1)
+
     if args.data_aug_hflip:
-        train_dataset = DCASE(root_dir_train, clip_length, True)
+        transform = HorizontalFlip()
+        train_dataset = DCASE(root_dir_train, clip_length, transform=transform)
     else:
-        train_dataset = DCASE(root_dir_train, clip_length, False)
+        train_dataset = DCASE(root_dir_train, clip_length)
 
     model = CNN(clip_length, train_dataset.get_num_clips())
     optim = Adam(model.parameters(), lr=args.learning_rate)

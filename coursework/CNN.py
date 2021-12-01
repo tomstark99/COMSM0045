@@ -58,7 +58,6 @@ class CNN(nn.Module):
         
         where (C = 1) is the number of 'channels' of uniary depth
         """
-        print(len(xs))
         xs = xs.view(-1, 1, self.height, self.width)
         xs = self.batch1(self.conv1(xs))
         xs = self.pool1(F.relu(xs))
