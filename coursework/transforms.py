@@ -19,7 +19,7 @@ class HorizontalFlip(object):
             noise = torch.randn(sample.size())
             sample += 1 * noise
         # split
-        if z == 1:
+        if x == 0 and z == 1:
             length = sample.shape[2]
             range_ = np.random.choice(np.arange(0, length))
             new, new2 = sample[:, :, 0:range_], sample[:, :, range_:length]
