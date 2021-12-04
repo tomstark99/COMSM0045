@@ -14,7 +14,7 @@ class HorizontalFlip(object):
         if y == 1:
             # noise = np.random.randn(len(sample))
             noise = torch.randn(sample.size())
-            sample += 2 * noise
+            sample += 1.5 * noise
         
         return sample
 
