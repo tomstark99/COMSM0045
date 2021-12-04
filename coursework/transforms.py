@@ -7,19 +7,19 @@ class HorizontalFlip(object):
         self.p = p
 
     def __call__(self, sample):
-        x = np.random.choice([0,1], p=[1-self.p, self.p])
+        # x = np.random.choice([0,1], p=[1-self.p, self.p])
         y = np.random.choice([0,1], p=[1-self.p, self.p])
         z = np.random.choice([0,1], p=[1-self.p, self.p])
         # flip
-        if x == 1:
-            sample = torch.flip(sample, dims=[2])
+        # if x == 1:
+        #     sample = torch.flip(sample, dims=[2])
         # noise
         if y == 1:
             # noise = np.random.randn(len(sample))
             noise = torch.randn(sample.size())
-            sample += 1 * noise
+            sample += 2 * noise
         # split
-        if x == 0 and z == 1:
+        if z == 1:
             length = sample.shape[2]
             range_ = np.random.choice(np.arange(0, length))
             new, new2 = sample[:, :, 0:range_], sample[:, :, range_:length]
