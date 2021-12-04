@@ -23,7 +23,7 @@ class HorizontalFlip(object):
             length = sample.shape[2]
             range_ = np.random.choice(np.arange(0, length))
             new, new2 = sample[:, :, 0:range_], sample[:, :, range_:length]
-            sample = torch.concat([new2, new], dim=2)
+            sample = torch.cat([new2, new], dim=2)
 
         return sample
 
