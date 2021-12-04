@@ -8,8 +8,13 @@ class HorizontalFlip(object):
 
     def __call__(self, sample):
         x = np.random.choice([0,1], p=[1-self.p, self.p])
+        y = np.random.choice([0,1], p=[1-self.p, self.p])
         if x == 1:
-            return torch.flip(sample, dims=[2])
-        else:
-            return sample
+            sample = torch.flip(sample, dims=[2])
+        if y == 1:
+            # noise = np.random.randn(len(sample))
+            noise = torch.randn(sample.size())
+            sample += 2 * noise
+        
+        return sample
 

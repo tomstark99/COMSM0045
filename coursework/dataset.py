@@ -31,7 +31,7 @@ class DCASE(Dataset):
 
         #splitting spec
         spec = self.__trim__(spec)
-
+        
         if self.transform:
             spec = self.transform(spec)
 
