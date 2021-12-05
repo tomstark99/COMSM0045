@@ -17,7 +17,7 @@ from dataset import DCASE, NF_DCASE, V_DCASE
 from trainer import Trainer
 from CNN import CNN
 from torchvision.transforms import Compose
-from transforms import HorizontalFlip, RandomNoise, RandomSplit
+from transforms import HorizontalFlip, RandomNoise, RandomSplit, FrequencyMasking
 
 parser = argparse.ArgumentParser(
     description="CW CNN training for DCASE 2016",
@@ -115,6 +115,12 @@ parser.add_argument(
     action="store_true"
 )
 
+parser.add_argument(
+    "--freq-mask", 
+    default=False,
+    action="store_true"
+)
+
 def train_test_loader(dataset: DCASE, batch_size: int, val_split: float) -> Tuple[DataLoader, DataLoader]:
     
     labels = {label: [clips for clips in dataset._labels[dataset._labels['label']==label].clip_no.unique()] for label in dataset._labels['label']}
@@ -185,6 +191,8 @@ def main(args):
         transforms_.append(RandomNoise())
     if args.data_split:
         transforms_.append(RandomSplit())
+    if args.freq_mask:
+        transforms_.append(FrequencyMasking())
     
     if transforms_:
         transform = Compose(transforms_)
@@ -248,9 +256,9 @@ def get_summary_writer_log_dir(args: argparse.Namespace) -> str:
         untangle in TB).
     """
     if args.full_train:
-        tb_log_dir_prefix = f'full_CNN_bs={args.batch_size}_lr={args.learning_rate}_run_' + ("hflip_" if args.data_aug_hflip else "") + ("noise_" if args.data_noise else "") + ("split_" if args.data_split else "")
+        tb_log_dir_prefix = f'full_CNN_bs={args.batch_size}_lr={args.learning_rate}_run_' + ("hflip_" if args.data_aug_hflip else "") + ("noise_" if args.data_noise else "") + ("split_" if args.data_split else "") + ("freqmask_" if args.freq_mask else "")
     else:
-        tb_log_dir_prefix = f'non_full_CNN_bs={args.batch_size}_lr={args.learning_rate}_run_' + ("hflip_" if args.data_aug_hflip else "") + ("noise_" if args.data_noise else "") + ("split_" if args.data_split else "")
+        tb_log_dir_prefix = f'non_full_CNN_bs={args.batch_size}_lr={args.learning_rate}_run_' + ("hflip_" if args.data_aug_hflip else "") + ("noise_" if args.data_noise else "") + ("split_" if args.data_split else "") + ("freqmask_" if args.freq_mask else "")
 
     i = 0
     while i < 1000:

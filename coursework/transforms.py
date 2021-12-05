@@ -42,3 +42,18 @@ class RandomSplit(object):
             sample = torch.cat([new2, new], dim=2)
 
         return sample
+
+class FrequencyMasking(object):
+    def __init__(self, p: float = 0.5):
+        self.p = p
+    
+    def __call__(self, sample):
+        x = np.random.choice([0,1], p=[1-self.p, self.p])
+
+        if x == 1:
+            f = np.random.randint(0, 27)
+            f0 = np.random.randint(0, len(sample[0]) - f)
+
+            sample[:, f0:f0+f, :] = False
+    
+        return sample
