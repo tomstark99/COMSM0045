@@ -57,3 +57,18 @@ class FrequencyMasking(object):
             sample[:, f0:f0+f, :] = False
     
         return sample
+
+class TimeMasking(object):
+    def __init__(self, p: float = 0.5):
+        self.p = p 
+    
+    def __call__(self, sample):
+        x = np.random.choice([0,1], p=[1-self.p, self.p])
+
+        if x == 1:
+            t = np.random.randint(0, 20)
+            t0 = np.random.randint(0, len(sample[1]) - t)
+
+            sample[:, :, t0:t0+t] = False
+        
+        return sample
