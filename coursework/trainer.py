@@ -338,7 +338,7 @@ class Trainer:
         )
 
     def save_model_params(self, model_path: str):
-        torch.save(self.model.state_dict(), f'./checkpoints2/{model_path}.pth')
+        torch.save(self.model.state_dict(), f'./checkpoints3/{model_path}.pth')
 
     def load_model_params(self, model_path: str):
-        self.model.load_state_dict(torch.load(f'/checkpoints2/{model_path}.pth', map_location=torch.device('cpu')))
+        self.model.load_state_dict(torch.load(f'/checkpoints3/{model_path}.pth', map_location=torch.device('cpu')))
