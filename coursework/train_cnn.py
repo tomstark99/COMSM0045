@@ -239,7 +239,7 @@ def main(args):
         summary_writer,
         args.full_train,
         device,
-        args.data_aug_hflip
+        root_dir_val,
     )
 
     trainer.train(
