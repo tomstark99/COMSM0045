@@ -1,12 +1,13 @@
 from typing import Union, Dict, Any, Tuple
 from pathlib import Path
-
+from CNN import CNN
+from dataset import V_DCASE
 import torch
 import torch.backends.cudnn
 import numpy as np
 from torch import nn
 from torch.optim.optimizer import Optimizer
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, dataloader
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 import random
@@ -22,7 +23,7 @@ class Trainer:
         summary_writer: SummaryWriter,
         full_train: bool,
         device: torch.device,
-        to_flip: bool
+        root_dir_val
     ):
         self.model = model.to(device)
         self.device = device
@@ -36,9 +37,10 @@ class Trainer:
         self.max_batch_size = 64
         self.current_accuracy = (0, 0)
         self.step = 0
-        self.to_flip = to_flip
+        self.val_dataset = V_DCASE(root_dir_val, model.clip_length)
+        self.eval_loader = DataLoader(self.val_dataset, self.batch_size, shuffle=False)
 
-    def _step(self, batch: Tuple[torch.Tensor, torch.Tensor], flip = False) -> Dict[str, Any]:
+    def _step(self, batch: Tuple[torch.Tensor, torch.Tensor]) -> Dict[str, Any]:
         data, labels = batch
         
         """
@@ -54,19 +56,6 @@ class Trainer:
 
         logits = torch.cat(chunk_logits) 
         """
-        # if flip:
-        #     for d in data:
-        #         random_bit = random.getrandbits(1)
-        #         if random_bit:
-        #             torch.flip(d, [1, 0])
-        #print(data.shape)
-        # if flip:
-        #     for d in data:
-        #         #print(d.shape)
-        #         temp = torch.flip(d, [1, 0])
-        #         #print(temp.shape)
-        #         data = torch.cat((data, temp.unsqueeze(0)), dim=0)
-        #         #print(data.shape)
         
         logits = self.model.forward(data.to(self.device))
         preds = logits.detach().cpu().argmax(-1)
@@ -102,7 +91,7 @@ class Trainer:
             _, labels = batch
 
             self.optimizer.zero_grad()
-            step_results = self._step(batch, self.to_flip)
+            step_results = self._step(batch)
 
             loss = step_results['loss']
             loss.backward()
@@ -218,10 +207,10 @@ class Trainer:
                 if self.current_accuracy[0] > max_accuracy:
                     max_accuracy = self.current_accuracy[0]
                     self.summary_writer.add_scalar("max accuracy", max_accuracy, self.step)
-                    if max_accuracy >= 0.835:
-                        epoch_since_last_increase = 16
-                    else:
-                        epoch_since_last_increase = 0
+                    # if max_accuracy >= 0.835:
+                        # epoch_since_last_increase = 16
+                    # else:
+                    epoch_since_last_increase = 0
                 else:
                     epoch_since_last_increase += 1
                 
@@ -258,8 +247,34 @@ class Trainer:
             # if epoch % 5 == 0:
             #     if accuracy > self.current_accuracy[0]:
             #         self.save_model_params(f'nonfull/{epoch}_{accuracy}')
-            if accuracy > 0.835:
-                self.save_model_params(f'non_full/{epoch}_{accuracy}')
+            train_results = {
+                'loss': [],
+                'accuracy': [],
+                'preds': [],
+                'labels': []
+            }
+
+            with torch.no_grad():
+                for batch in self.eval_loader:
+                    _, labels = batch
+                    step_results = self._step(batch)
+                    loss = step_results['loss']
+
+                    preds = step_results['logits'].argmax(-1).numpy()
+                    train_results['loss'].append(loss.detach().cpu().item())
+                    train_results['preds'].extend(list(preds))
+                    train_results['labels'].extend(list(labels.numpy()))
+
+                accuracy = self.compute_accuracy(
+                    np.array(train_results["labels"]), 
+                    np.array(train_results["preds"])
+                )
+
+            self.summary_writer.add_scalar("evaluation accuracy", accuracy, self.step)
+
+            if accuracy > 0.8:
+                log_dir = str(self.summary_writer.log_dir).split('/')[-1]
+                self.save_model_params(f'non_full/{log_dir}_{epoch}_{accuracy}')
 
         if accuracy > self.current_accuracy[0]:
             self.current_accuracy = (accuracy, epoch)
