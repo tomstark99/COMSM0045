@@ -51,10 +51,11 @@ class FrequencyMasking(object):
         x = np.random.choice([0,1], p=[1-self.p, self.p])
 
         if x == 1:
-            f = np.random.randint(0, 27)
-            f0 = np.random.randint(0, len(sample[0]) - f)
+            for i, s in enumerate(sample):
+                f = np.random.randint(0, 27)
+                f0 = np.random.randint(0, len(s) - f)
 
-            sample[:, f0:f0+f, :] = False
+                sample[i, f0:f0+f, :] = s.mean()
     
         return sample
 
@@ -66,9 +67,10 @@ class TimeMasking(object):
         x = np.random.choice([0,1], p=[1-self.p, self.p])
 
         if x == 1:
-            t = np.random.randint(0, 20)
-            t0 = np.random.randint(0, len(sample[1]) - t)
+            for i, s in enumerate(sample):
+                t = np.random.randint(0, 20)
+                t0 = np.random.randint(0, len(s[0]) - t)
 
-            sample[:, :, t0:t0+t] = False
+                sample[i, :, t0:t0+t] = s.mean()
         
         return sample
