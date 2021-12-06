@@ -44,7 +44,7 @@ class RandomSplit(object):
         return sample
 
 class FrequencyMasking(object):
-    def __init__(self, p: float = 0.5):
+    def __init__(self, p: float = 1):
         self.p = p
     
     def __call__(self, sample):
@@ -60,7 +60,7 @@ class FrequencyMasking(object):
         return sample
 
 class TimeMasking(object):
-    def __init__(self, p: float = 0.5):
+    def __init__(self, p: float = 1):
         self.p = p 
     
     def __call__(self, sample):
