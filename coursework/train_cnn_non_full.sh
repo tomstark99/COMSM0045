@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #SBATCH --partition gpu
 #SBATCH --time 0-01:00
-#SBATCH --mem 64GB
+#SBATCH --mem 80GB
 #SBATCH --gres gpu:1
 
 # get rid of any modules already loaded

@@ -127,7 +127,7 @@ parser.add_argument(
     action="store_true"
 )
 
-def train_test_loader(dataset: DCASE, batch_size: int, val_split: float) -> Tuple[DataLoader, DataLoader]:
+def train_test_loader(dataset: DCASE, batch_size: int, val_split: float, transforms) -> Tuple[DataLoader, DataLoader]:
     
     labels = {label: [clips for clips in dataset._labels[dataset._labels['label']==label].clip_no.unique()] for label in dataset._labels['label']}
 
@@ -158,7 +158,8 @@ def train_test_loader(dataset: DCASE, batch_size: int, val_split: float) -> Tupl
     train_subset = NF_DCASE(
         dataset._root_dir, 
         dataset._clip_duration, 
-        train_clips
+        train_clips,
+        transforms
     )
     val_subset = NF_DCASE(
         dataset._root_dir, 
@@ -228,7 +229,7 @@ def main(args):
             num_workers=args.num_workers
         )
     else:
-        train_loader, val_loader = train_test_loader(train_dataset, args.batch_size, args.train_split)
+        train_loader, val_loader = train_test_loader(train_dataset, args.batch_size, args.train_split, transform)
 
     trainer = Trainer(
         model, 

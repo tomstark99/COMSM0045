@@ -44,33 +44,45 @@ class RandomSplit(object):
         return sample
 
 class FrequencyMasking(object):
-    def __init__(self, p: float = 1):
+    def __init__(self, p: float = 0.5):
         self.p = p
     
     def __call__(self, sample):
         x = np.random.choice([0,1], p=[1-self.p, self.p])
 
         if x == 1:
-            for i, s in enumerate(sample):
-                f = np.random.randint(0, 27)
-                f0 = np.random.randint(0, len(s) - f)
+            f = np.random.randint(0, 27)
+            f_ = np.random.randint(0, 27)
+            f0 = np.random.randint(0, len(sample[0]) - f)
+            f0_ = np.random.randint(0, len(sample[0]) - f_)
+            sample[:, f0:f0+f, :] = 0
+            sample[:, f0_:f0_+f_, :] = 0
+            #for i, s in enumerate(sample):
+            #    f = np.random.randint(0, 27)
+            #    f0 = np.random.randint(0, len(s) - f)
 
-                sample[i, f0:f0+f, :] = s.mean()
+            #    sample[i, f0:f0+f, :] = 0
     
         return sample
 
 class TimeMasking(object):
-    def __init__(self, p: float = 1):
+    def __init__(self, p: float = 0.5):
         self.p = p 
     
     def __call__(self, sample):
         x = np.random.choice([0,1], p=[1-self.p, self.p])
 
         if x == 1:
-            for i, s in enumerate(sample):
-                t = np.random.randint(0, 20)
-                t0 = np.random.randint(0, len(s[0]) - t)
+            t = np.random.randint(0, 101)
+            t_ = np.random.randint(0, 101)
+            t0 = np.random.randint(0, sample.size()[2] - t)
+            t0_ = np.random.randint(0, sample.size()[2] - t_)  
+            sample[:, :, t0:t0+t] = 0
+            sample[:, :, t0_:t0_+t_] = 0
+            #for i, s in enumerate(sample):
+             #   t = np.random.randint(0, 20)
+              #  t0 = np.random.randint(0, len(s[0]) - t)
 
-                sample[i, :, t0:t0+t] = s.mean()
-        
+               # sample[i, :, t0:t0+t] = 0
+
         return sample
