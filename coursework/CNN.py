@@ -43,8 +43,8 @@ class CNN(nn.Module):
             kernel_size=5,
             stride=5
         )
-        self.pool2 = nn.AdaptiveMaxPool2d((4, None))
-        self.fc1 = nn.Linear(256*4*25, 15)
+        self.pool2 = nn.AdaptiveMaxPool2d((4, 1))
+        self.fc1 = nn.Linear(256*4*1, 15)
         
         self.initialise_layer(self.conv1)
         self.initialise_layer(self.conv2)

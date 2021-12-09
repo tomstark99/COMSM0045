@@ -241,7 +241,8 @@ class Trainer:
         if self.full_train:
             # save the model if the accuracy is greater than 85% # 0.862
             if accuracy > 0.862:
-                self.save_model_params(f'full/{epoch}_{accuracy}')
+                log_dir = str(self.summary_writer.log_dir).split('/')[-1]
+                self.save_model_params(f'full4/{log_dir}_{epoch}_{accuracy}')
         else:
             # 0.835
             # if epoch % 5 == 0:

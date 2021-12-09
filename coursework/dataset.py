@@ -32,6 +32,10 @@ class DCASE(Dataset):
         #splitting spec
         spec = self.__trim__(spec)
         
+        means = spec.mean()
+        stds = spec.std()
+        spec = (spec - means) / stds
+
         if self.transform:
             spec = self.transform(spec)
 
@@ -92,6 +96,11 @@ class V_DCASE(Dataset):
 
         #splitting spec
         spec = self.__trim__(spec)
+ 
+        means = spec.mean()
+        stds = spec.std()
+        spec = (spec - means) / stds
+
         return spec, label
 
     def __trim__(self, spec: torch.Tensor) -> torch.Tensor:
@@ -130,7 +139,8 @@ class NF_DCASE(Dataset):
         self, 
         root_dir: str, 
         clip_duration: int, 
-        clip_filter
+        clip_filter,
+        transform = None
     ):
         self._root_dir = Path(root_dir)
         self._labels = pd.read_csv((self._root_dir / 'labels.csv'), names=['file', 'label'])
@@ -140,6 +150,7 @@ class NF_DCASE(Dataset):
         self._total_duration = 30 #DCASE audio length is 30s
         self._num_clips = self._total_duration // clip_duration 
         self._data_len = len(self._labels)
+        self.transform = transform
         
     def __getitem__(self, index):
         #reading spectrograms
@@ -149,6 +160,14 @@ class NF_DCASE(Dataset):
 
         #splitting spec
         spec = self.__trim__(spec)
+         
+        means = spec.mean()
+        stds = spec.std()
+        spec = (spec - means) / stds
+
+        if self.transform:
+            spec = self.transform(spec)
+
         return spec, label
 
     def __trim__(self, spec: torch.Tensor) -> torch.Tensor:
