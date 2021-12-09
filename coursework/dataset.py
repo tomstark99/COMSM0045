@@ -11,7 +11,8 @@ class DCASE(Dataset):
         self, 
         root_dir: str, 
         clip_duration: int, 
-        transform=None
+        transform=None,
+        normalise=False
     ):
         self._root_dir = Path(root_dir)
         self._labels = pd.read_csv((self._root_dir / 'labels.csv'), names=['file', 'label'])
@@ -22,6 +23,7 @@ class DCASE(Dataset):
         self._num_clips = self._total_duration // clip_duration 
         self._data_len = len(self._labels)
         self.transform = transform
+        self.normalise = normalise
 
     def __getitem__(self, index):
         #reading spectrograms
@@ -32,9 +34,10 @@ class DCASE(Dataset):
         #splitting spec
         spec = self.__trim__(spec)
         
-        means = spec.mean()
-        stds = spec.std()
-        spec = (spec - means) / stds
+        if self.normalise:
+            means = spec.mean()
+            stds = spec.std()
+            spec = (spec - means) / stds
 
         if self.transform:
             spec = self.transform(spec)
@@ -79,7 +82,7 @@ class DCASE(Dataset):
         return self._data_len
 
 class V_DCASE(Dataset):
-    def __init__(self, root_dir: str, clip_duration: int):
+    def __init__(self, root_dir: str, clip_duration: int, normalise = False):
         self._root_dir = Path(root_dir)
         self._labels = pd.read_csv((self._root_dir / 'labels.csv'), names=['file', 'label'])
         self._labels['label'] = self._labels.label.astype('category').cat.codes.astype('int') #create categorical labels
@@ -87,6 +90,7 @@ class V_DCASE(Dataset):
         self._total_duration = 30 #DCASE audio length is 30s
         self._num_clips = self._total_duration // clip_duration 
         self._data_len = len(self._labels)
+        self.normalise = normalise
 
     def __getitem__(self, index):
         #reading spectrograms
@@ -97,9 +101,10 @@ class V_DCASE(Dataset):
         #splitting spec
         spec = self.__trim__(spec)
  
-        means = spec.mean()
-        stds = spec.std()
-        spec = (spec - means) / stds
+        if self.normalise:
+            means = spec.mean()
+            stds = spec.std()
+            spec = (spec - means) / stds
 
         return spec, label
 
@@ -140,7 +145,8 @@ class NF_DCASE(Dataset):
         root_dir: str, 
         clip_duration: int, 
         clip_filter,
-        transform = None
+        transform = None,
+        normalise = False
     ):
         self._root_dir = Path(root_dir)
         self._labels = pd.read_csv((self._root_dir / 'labels.csv'), names=['file', 'label'])
@@ -151,6 +157,7 @@ class NF_DCASE(Dataset):
         self._num_clips = self._total_duration // clip_duration 
         self._data_len = len(self._labels)
         self.transform = transform
+        self.normalise = normalise
         
     def __getitem__(self, index):
         #reading spectrograms
@@ -161,9 +168,10 @@ class NF_DCASE(Dataset):
         #splitting spec
         spec = self.__trim__(spec)
          
-        means = spec.mean()
-        stds = spec.std()
-        spec = (spec - means) / stds
+        if self.normalise:
+            means = spec.mean()
+            stds = spec.std()
+            spec = (spec - means) / stds
 
         if self.transform:
             spec = self.transform(spec)

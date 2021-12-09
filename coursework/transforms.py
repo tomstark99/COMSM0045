@@ -1,88 +1,40 @@
 import numpy as np
 import torch
 
-class HorizontalFlip(object):
-
-    def __init__(self, p: float = 0.5):
-        self.p = p
-
-    def __call__(self, sample):
-        x = np.random.choice([0,1], p=[1-self.p, self.p])
-        #flip
-        if x == 1:
-            sample = torch.flip(sample, dims=[2])
-
-        return sample
-
-class RandomNoise(object):
-    def __init__(self, p: float = 0.5):
-        self.p = p
-
-    def __call__(self, sample):
-        y = np.random.choice([0,1], p=[1-self.p, self.p])
-        # noise
-        if y == 1:
-            # noise = np.random.randn(len(sample))
-            noise = torch.randn(sample.size())
-            sample += 2 * noise
-
-        return sample
-
-class RandomSplit(object):
-    def __init__(self, p: float = 0.5):
-        self.p = p
-
-    def __call__(self, sample):
-        z = np.random.choice([0,1], p=[1-self.p, self.p])
-        # split
-        if z == 1:
-            length = sample.shape[2]
-            range_ = np.random.choice(np.arange(0, length))
-            new, new2 = sample[:, :, 0:range_], sample[:, :, range_:length]
-            sample = torch.cat([new2, new], dim=2)
-
-        return sample
-
 class FrequencyMasking(object):
-    def __init__(self, p: float = 0.5):
+    def __init__(self, p: float = 0.5, double = False):
         self.p = p
+        self.double = double
     
     def __call__(self, sample):
         x = np.random.choice([0,1], p=[1-self.p, self.p])
 
         if x == 1:
             f = np.random.randint(0, 27)
-            f_ = np.random.randint(0, 27)
             f0 = np.random.randint(0, len(sample[0]) - f)
-            f0_ = np.random.randint(0, len(sample[0]) - f_)
             sample[:, f0:f0+f, :] = 0
-            sample[:, f0_:f0_+f_, :] = 0
-            #for i, s in enumerate(sample):
-            #    f = np.random.randint(0, 27)
-            #    f0 = np.random.randint(0, len(s) - f)
-
-            #    sample[i, f0:f0+f, :] = 0
+            if self.double:
+                f_ = np.random.randint(0, 27)
+                f0_ = np.random.randint(0, len(sample[0]) - f_)
+                sample[:, f0_:f0_+f_, :] = 0
     
         return sample
 
 class TimeMasking(object):
-    def __init__(self, p: float = 0.5):
+    def __init__(self, p: float = 0.5, double = False):
         self.p = p 
+        self.double = double
     
     def __call__(self, sample):
         x = np.random.choice([0,1], p=[1-self.p, self.p])
 
         if x == 1:
             t = np.random.randint(0, 101)
-            t_ = np.random.randint(0, 101)
-            t0 = np.random.randint(0, sample.size()[2] - t)
-            t0_ = np.random.randint(0, sample.size()[2] - t_)  
+            t0 = np.random.randint(0, sample.size()[2] - t) 
             sample[:, :, t0:t0+t] = 0
-            sample[:, :, t0_:t0_+t_] = 0
-            #for i, s in enumerate(sample):
-             #   t = np.random.randint(0, 20)
-              #  t0 = np.random.randint(0, len(s[0]) - t)
-
-               # sample[i, :, t0:t0+t] = 0
+            if self.double:
+                t_ = np.random.randint(0, 101)
+                t0_ = np.random.randint(0, sample.size()[2] - t_) 
+                sample[:, :, t0_:t0_+t_] = 0
 
         return sample

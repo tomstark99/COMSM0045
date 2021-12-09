@@ -17,7 +17,7 @@ from dataset import DCASE, NF_DCASE, V_DCASE
 from trainer import Trainer
 from CNN import CNN
 from torchvision.transforms import Compose
-from transforms import HorizontalFlip, RandomNoise, RandomSplit, FrequencyMasking, TimeMasking
+from transforms import FrequencyMasking, TimeMasking
 
 parser = argparse.ArgumentParser(
     description="CW CNN training for DCASE 2016",
@@ -97,32 +97,27 @@ parser.add_argument(
     type=float,
     help="Percentage of the training data to split as a validation set."
 )
-parser.add_argument(
-    "--data-aug-hflip", 
-    default=False,
-    action="store_true"
-)
-
-parser.add_argument(
-    "--data-noise", 
-    default=False,
-    action="store_true"
-)
-
-parser.add_argument(
-    "--data-split", 
-    default=False,
-    action="store_true"
-)
 
 parser.add_argument(
     "--freq-mask", 
-    default=False,
-    action="store_true"
+    default=-1,
+    type=float
 )
 
 parser.add_argument(
     "--time-mask", 
+    default=-1,
+    type=float
+)
+
+parser.add_argument(
+    "--double",
+    default=False,
+    action="store_true"
+)
+
+parser.add_argument(
+    "--normalise",
     default=False,
     action="store_true"
 )
@@ -159,12 +154,14 @@ def train_test_loader(dataset: DCASE, batch_size: int, val_split: float, transfo
         dataset._root_dir, 
         dataset._clip_duration, 
         train_clips,
-        transforms
+        transforms,
+        args.normalise
     )
     val_subset = NF_DCASE(
         dataset._root_dir, 
         dataset._clip_duration, 
-        test_clips
+        test_clips,
+        args.normalise
     )
 
     return DataLoader(train_subset, batch_size=batch_size, shuffle=True), DataLoader(val_subset, batch_size=batch_size, shuffle=False)
@@ -192,27 +189,21 @@ def main(args):
     
     transform = None
     transforms_ = []
-    if args.data_aug_hflip:
-        transforms_.append(HorizontalFlip())
-    if args.data_noise:
-        transforms_.append(RandomNoise())
-    if args.data_split:
-        transforms_.append(RandomSplit())
-    if args.freq_mask:
-        transforms_.append(FrequencyMasking())
-    if args.time_mask:
-        transforms_.append(TimeMasking())
+    if args.freq_mask != -1:
+        transforms_.append(FrequencyMasking(args.freq_mask, args.double))
+    if args.time_mask != -1:
+        transforms_.append(TimeMasking(args.freq_mask, args.double))
     
     if transforms_:
         transform = Compose(transforms_)
 
-    train_dataset = DCASE(root_dir_train, clip_length, transform=transform)
+    train_dataset = DCASE(root_dir_train, clip_length, transform=transform, normalise = args.normalise)
 
     model = CNN(clip_length, train_dataset.get_num_clips())
     optim = Adam(model.parameters(), lr=args.learning_rate)
 
     if args.full_train:
-        val_dataset = V_DCASE(root_dir_val, clip_length)
+        val_dataset = V_DCASE(root_dir_val, clip_length, args.normalise)
 
         train_loader = DataLoader(
             train_dataset, 
@@ -265,9 +256,9 @@ def get_summary_writer_log_dir(args: argparse.Namespace) -> str:
         untangle in TB).
     """
     if args.full_train:
-        tb_log_dir_prefix = f'full_CNN_bs={args.batch_size}_lr={args.learning_rate}_run_' + ("hflip_" if args.data_aug_hflip else "") + ("noise_" if args.data_noise else "") + ("split_" if args.data_split else "") + ("freqmask_" if args.freq_mask else "") + ("time_" if args.time_mask else "")
+        tb_log_dir_prefix = f'full_CNN_bs={args.batch_size}_lr={args.learning_rate}_run_' + ("freqmask_" if args.freq_mask else "") + ("time_" if args.time_mask else "") + ("double_" if args.double else "") + ("normalised_" if args.normalise else "")
     else:
-        tb_log_dir_prefix = f'non_full_CNN_bs={args.batch_size}_lr={args.learning_rate}_run_' + ("hflip_" if args.data_aug_hflip else "") + ("noise_" if args.data_noise else "") + ("split_" if args.data_split else "") + ("freqmask_" if args.freq_mask else "") + ("time_" if args.time_mask else "")
+        tb_log_dir_prefix = f'non_full_CNN_bs={args.batch_size}_lr={args.learning_rate}_run_' + ("freqmask_" if args.freq_mask else "") + ("time_" if args.time_mask else "") + ("double_" if args.double else "") + ("normalised_" if args.normalise else "")
 
     i = 0
     while i < 1000:
