@@ -155,13 +155,13 @@ def train_test_loader(dataset: DCASE, batch_size: int, val_split: float, transfo
         dataset._clip_duration, 
         train_clips,
         transforms,
-        normalised
+        normalise = normalised
     )
     val_subset = NF_DCASE(
         dataset._root_dir, 
         dataset._clip_duration, 
         test_clips,
-        normalised
+        normalise = normalised
     )
 
     return DataLoader(train_subset, batch_size=batch_size, shuffle=True), DataLoader(val_subset, batch_size=batch_size, shuffle=False)
@@ -190,9 +190,9 @@ def main(args):
     transform = None
     transforms_ = []
     if args.freq_mask != -1:
-        transforms_.append(FrequencyMasking(args.freq_mask, args.double))
+        transforms_.append(FrequencyMasking(p = args.freq_mask, double = args.double))
     if args.time_mask != -1:
-        transforms_.append(TimeMasking(args.freq_mask, args.double))
+        transforms_.append(TimeMasking(p = args.freq_mask, double = args.double))
     
     if transforms_:
         transform = Compose(transforms_)
