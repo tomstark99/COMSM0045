@@ -232,6 +232,7 @@ def main(args):
         args.full_train,
         device,
         root_dir_val,
+        normalise = args.normalise
     )
 
     trainer.train(

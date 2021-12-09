@@ -23,7 +23,8 @@ class Trainer:
         summary_writer: SummaryWriter,
         full_train: bool,
         device: torch.device,
-        root_dir_val
+        root_dir_val,
+        normalise = False
     ):
         self.model = model.to(device)
         self.device = device
@@ -37,7 +38,7 @@ class Trainer:
         self.max_batch_size = 64
         self.current_accuracy = (0, 0)
         self.step = 0
-        self.val_dataset = V_DCASE(root_dir_val, model.clip_length)
+        self.val_dataset = V_DCASE(root_dir_val, model.clip_length, normalise)
         self.eval_loader = DataLoader(self.val_dataset, self.batch_size, shuffle=False)
 
     def _step(self, batch: Tuple[torch.Tensor, torch.Tensor]) -> Dict[str, Any]:
