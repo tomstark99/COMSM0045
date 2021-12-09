@@ -256,9 +256,9 @@ def get_summary_writer_log_dir(args: argparse.Namespace) -> str:
         untangle in TB).
     """
     if args.full_train:
-        tb_log_dir_prefix = f'full_CNN_bs={args.batch_size}_lr={args.learning_rate}_run_' + ("freqmask_" if args.freq_mask else "") + ("time_" if args.time_mask else "") + ("double_" if args.double else "") + ("normalised_" if args.normalise else "")
+        tb_log_dir_prefix = f'full_CNN_bs={args.batch_size}_lr={args.learning_rate}_run_' + ("freqmask_" + str(args.freq_mask) if args.freq_mask != -1 else "") + ("time_" + str(args.time_mask) if args.time_mask != -1 else "") + ("double_" if args.double else "") + ("normalised_" if args.normalise else "")
     else:
-        tb_log_dir_prefix = f'non_full_CNN_bs={args.batch_size}_lr={args.learning_rate}_run_' + ("freqmask_" if args.freq_mask else "") + ("time_" if args.time_mask else "") + ("double_" if args.double else "") + ("normalised_" if args.normalise else "")
+        tb_log_dir_prefix = f'non_full_CNN_bs={args.batch_size}_lr={args.learning_rate}_run_' + ("freqmask_" + str(args.freq_mask) if args.freq_mask != -1 else "") + ("time_" + str(args.time_mask) if args.time_mask != -1 else "") + ("double_" if args.double else "") + ("normalised_" if args.normalise else "")
 
     i = 0
     while i < 1000:
