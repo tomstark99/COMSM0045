@@ -144,3 +144,4 @@ slurm*
 # PyTorch model files
 # *.pth
 **/checkpoints
+!submission/checkpoints/
